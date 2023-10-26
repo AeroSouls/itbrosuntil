@@ -643,6 +643,10 @@
     "winget": "ZeroTier.ZeroTierOne",
     "choco": "zerotier-one"
   },
+  "WPFInstallublock": {
+	"Winget": "na",
+	"choco": "ublockorigin-chrome"
+	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"
