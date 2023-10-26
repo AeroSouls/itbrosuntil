@@ -647,6 +647,10 @@
 	"Winget": "na",
 	"choco": "ublockorigin-chrome"
 	},
+	"WPFInstallsblock": {
+	"Winget": "na",
+	"choco": "sponsorblock-for-youtube-chrome"
+	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"

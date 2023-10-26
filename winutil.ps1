@@ -2476,6 +2476,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
 
                                 <Label Content="Browser AD/Malware Block" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallublock" Content="uBlock Chrome" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallsblock" Content="SponsorBlock YouTube Chrome" Margin="5,0"/>
 
                                 <Label Content="Communications" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalldiscord" Content="Discord" Margin="5,0"/>
@@ -3410,6 +3411,10 @@ $sync.configs.applications = '{
   "WPFInstallublock": {
 	"Winget": "na",
 	"choco": "ublockorigin-chrome"
+	},
+	"WPFInstallsblock": {
+	"Winget": "na",
+	"choco": "sponsorblock-for-youtube-chrome"
 	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",

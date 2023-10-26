@@ -263,6 +263,7 @@
 
                                 <Label Content="Browser AD/Malware Block" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallublock" Content="uBlock Chrome" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallsblock" Content="SponsorBlock YouTube Chrome" Margin="5,0"/>
 
                                 <Label Content="Communications" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalldiscord" Content="Discord" Margin="5,0"/>
