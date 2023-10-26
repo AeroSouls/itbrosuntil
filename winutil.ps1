@@ -1291,10 +1291,9 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
     Write-Host ""                                       
-    Write-Host "====ITBros Edit V1.2===="
+    Write-Host "====ITBros Edit V1.1===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
-
 
     #====DEBUG GUI Elements====
 
@@ -2438,7 +2437,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                     <Button Content="Updates" HorizontalAlignment="Left" Height="40" Width="100"
                         Background="{ButtonUpdatesBackgroundColor}" Foreground="{ButtonInstallForegroundColor}" FontWeight="Bold" Name="WPFTab4BT"/>
                 </DockPanel>
-                <TabControl Grid.Row="1" Padding="-1" Name="WPFTabNav" Background="#222222" CornerRadius="10">
+                <TabControl Grid.Row="1" Padding="-1" Name="WPFTabNav" Background="#222222">
                     <TabItem Header="Install" Visibility="Collapsed" Name="WPFTab1">
                         <Grid Background="#222222">
                             <Grid.ColumnDefinitions>
