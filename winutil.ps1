@@ -1295,7 +1295,6 @@ Function Invoke-WPFFormVariables {
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
 
-
     #====DEBUG GUI Elements====
 
     #Write-Host "Found the following interactable elements from our form" -ForegroundColor Cyan
@@ -2428,7 +2427,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <DockPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="0" Width="1100">
-                    <Image Height="100" Width="100" Name="WPFIcon" SnapsToDevicePixels="True" Source="https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png" Margin="0,10,0,10"/>
+                    <Image Height="100" Width="100" Name="WPFIcon" SnapsToDevicePixels="True" Source="https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png" Margin="0,10,20,10"/>
                     <Button Content="Install" HorizontalAlignment="Left" Height="40" Width="100"
                         Background="{ButtonInstallBackgroundColor}" Foreground="{ButtonInstallForegroundColor}" FontWeight="Bold" Name="WPFTab1BT"/>
                     <Button Content="Tweaks" HorizontalAlignment="Left" Height="40" Width="100"
