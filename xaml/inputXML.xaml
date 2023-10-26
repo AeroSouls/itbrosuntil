@@ -304,8 +304,6 @@
                                 <CheckBox Name="WPFInstalllibreoffice" Content="LibreOffice" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallnaps2" Content="NAPS2 (Document Scanner)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallnotepadplus" Content="Notepad++" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallobsidian" Content="Obsidian" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallokular" Content="Okular" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallonlyoffice" Content="ONLYOffice Desktop" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallsumatra" Content="Sumatra PDF" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallwinmerge" Content="WinMerge" Margin="5,0"/>
@@ -339,22 +337,11 @@
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="3" Margin="10">
                                 <Label Content="Multimedia Tools" FontSize="16" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallaimp" Content="AIMP (Music Player)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallaudacity" Content="Audacity" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallblender" Content="Blender (3D Graphics)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallcider" Content="Cider (FOSS Music Player)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalleartrumpet" Content="Eartrumpet (Audio)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallflameshot" Content="Flameshot (Screenshots)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallgimp" Content="GIMP (Image Editor)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallgreenshot" Content="Greenshot (Screenshots)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallitunes" Content="iTunes" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallkdenlive" Content="Kdenlive (Video Editor)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallkodi" Content="Kodi Media Center" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallklite" Content="K-Lite Codec Standard" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallkrita" Content="Krita (Image Editor)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallmpc" Content="Media Player Classic (Video Player)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallnglide" Content="nGlide (3dfx compatibility)" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallnomacs" Content="Nomacs (Image viewer)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallobs" Content="OBS Studio" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallsharex" Content="ShareX (Screenshots)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalltidal" Content="Tidal" Margin="5,0"/>
@@ -373,20 +360,14 @@
                                 <Label Content="Utilities" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstall7zip" Content="7-Zip" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallalacritty" Content="Alacritty Terminal" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallanydesk" Content="AnyDesk" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallautohotkey" Content="AutoHotkey" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallbitwarden" Content="Bitwarden" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallbulkcrapuninstaller" Content="Bulk Crap Uninstaller" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallcpuz" Content="CPU-Z" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallddu" Content="Display Driver Uninstaller" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalldeluge" Content="Deluge" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalletcher" Content="Etcher USB Creator" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallesearch" Content="Everything Search" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallglaryutilities" Content="Glary Utilities" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallgpuz" Content="GPU-Z" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallgsudo" Content="Gsudo" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallhwinfo" Content="HWInfo" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalljdownloader" Content="J Download Manager" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallmalwarebytes" Content="MalwareBytes" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallmsiafterburner" Content="MSI Afterburner" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallopenshell" Content="Open Shell (Start Menu)" Margin="5,0"/>

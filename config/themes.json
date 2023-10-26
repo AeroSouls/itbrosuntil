@@ -34,7 +34,7 @@
                    "ButtonBackgroundColor":  "#000000",
                    "ButtonBackgroundPressedColor":  "#FFFFFF",
                    "ButtonBackgroundMouseoverColor":  "#A55A64",
-                   "ButtonForegroundColor":  "#9632ff",
+                   "ButtonForegroundColor":  "#FFFFFF",
                    "ButtonBorderThickness":  "3",
                    "ButtonMargin":  "2",
                    "ButtonCornerRadius": "4"
