@@ -1293,8 +1293,7 @@ Function Invoke-WPFFormVariables {
     Write-Host ""                                       
     Write-Host "====ITBros Edit===="
     Write-Host "=====Windows Toolbox====="
-    Write-Host ""
-
+    Write-Host "" 
 
     #====DEBUG GUI Elements====
 
@@ -3557,7 +3556,7 @@ $sync.configs.themes = '{
                    "ButtonInstallForegroundColor":  "#FFFFFF",
                    "ButtonBackgroundColor":  "#000000",
                    "ButtonBackgroundPressedColor":  "#FFFFFF",
-                   "ButtonBackgroundMouseoverColor":  "#A55A64",
+                   "ButtonBackgroundMouseoverColor":  "#DC102B",
                    "ButtonForegroundColor":  "#FFFFFF",
                    "ButtonBorderThickness":  "3",
                    "ButtonMargin":  "2",
@@ -3577,7 +3576,7 @@ $sync.configs.themes = '{
                    "ButtonInstallForegroundColor":  "#FFFFFF",
                    "ButtonBackgroundColor":  "#000000",
                    "ButtonBackgroundPressedColor":  "#FFFFFF",
-                   "ButtonBackgroundMouseoverColor":  "#A55A64",
+                   "ButtonBackgroundMouseoverColor":  "#DC102B",
                    "ButtonForegroundColor":  "#FFFFFF",
                    "ButtonBorderThickness":  "3",
                    "ButtonMargin":  "2",
