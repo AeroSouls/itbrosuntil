@@ -22,7 +22,7 @@
     "Matrix":  {
                    "ComboBoxBackgroundColor":  "#000000",
                    "LabelboxForegroundColor":  "#FFEE58",
-                   "MainForegroundColor":  "#9CCC65",
+                   "MainForegroundColor":  "#9632ff",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
                    "ComboBoxForegroundColor":  "#FFEE58",
@@ -34,7 +34,7 @@
                    "ButtonBackgroundColor":  "#000000",
                    "ButtonBackgroundPressedColor":  "#FFFFFF",
                    "ButtonBackgroundMouseoverColor":  "#A55A64",
-                   "ButtonForegroundColor":  "#9CCC65",
+                   "ButtonForegroundColor":  "#9632ff",
                    "ButtonBorderThickness":  "3",
                    "ButtonMargin":  "2",
                    "ButtonCornerRadius": "4"

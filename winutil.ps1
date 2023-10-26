@@ -3604,7 +3604,7 @@ $sync.configs.themes = '{
     "Matrix":  {
                    "ComboBoxBackgroundColor":  "#000000",
                    "LabelboxForegroundColor":  "#FFEE58",
-                   "MainForegroundColor":  "#9CCC65",
+                   "MainForegroundColor":  "#9632ff",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
                    "ComboBoxForegroundColor":  "#FFEE58",
@@ -3616,7 +3616,7 @@ $sync.configs.themes = '{
                    "ButtonBackgroundColor":  "#000000",
                    "ButtonBackgroundPressedColor":  "#FFFFFF",
                    "ButtonBackgroundMouseoverColor":  "#A55A64",
-                   "ButtonForegroundColor":  "#9CCC65",
+                   "ButtonForegroundColor":  "#9632ff",
                    "ButtonBorderThickness":  "3",
                    "ButtonMargin":  "2",
                    "ButtonCornerRadius": "4"
@@ -5772,7 +5772,7 @@ $sync.configs.tweaks = '{
   },
   "WPFEssTweaksOO": {
     "InvokeScript": [
-      "curl.exe -s \"https://raw.githubusercontent.com/AeroSouls/itbrosuntil/main/ooshutup10_winutil_settings.cfg\" -o $ENV:temp\\ooshutup10.cfg
+      "curl.exe -s \"https://raw.githubusercontent.com/AeroSouls/itbrosWin/main/ooshutup10_winutil_settings.cfg\" -o $ENV:temp\\ooshutup10.cfg
        curl.exe -s \"https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe\" -o $ENV:temp\\OOSU10.exe
        Start-Process $ENV:temp\\OOSU10.exe -ArgumentList \"\"\"$ENV:temp\\ooshutup10.cfg\"\" /quiet\"
        "
