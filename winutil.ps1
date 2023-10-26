@@ -5729,7 +5729,7 @@ $sync.configs.tweaks = '{
   },
   "WPFEssTweaksOO": {
     "InvokeScript": [
-      "curl.exe -s \"https://raw.githubusercontent.com/AeroSouls/itbrosWin/main/ooshutup10_winutil_settings.cfg\" -o $ENV:temp\\ooshutup10.cfg
+      "curl.exe -s \"https://raw.githubusercontent.com/AeroSouls/itbrosuntil/main/ooshutup10_winutil_settings.cfg\" -o $ENV:temp\\ooshutup10.cfg
        curl.exe -s \"https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe\" -o $ENV:temp\\OOSU10.exe
        Start-Process $ENV:temp\\OOSU10.exe -ArgumentList \"\"\"$ENV:temp\\ooshutup10.cfg\"\" /quiet\"
        "
@@ -5771,7 +5771,7 @@ $sync.configs.tweaks = '{
         "
         #:: Standalone script by AveYo Source: https://raw.githubusercontent.com/AveYo/fox/main/Edge_Removal.bat
 
-        curl.exe -s \"https://raw.githubusercontent.com/AeroSouls/itbrosWin/main/edgeremoval.bat\" -o $ENV:temp\\edgeremoval.bat
+        curl.exe -s \"https://raw.githubusercontent.com/AeroSouls/itbrosuntil/main/edgeremoval.bat\" -o $ENV:temp\\edgeremoval.bat
         Start-Process $ENV:temp\\edgeremoval.bat
 
         "
