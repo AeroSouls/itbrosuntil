@@ -1290,10 +1290,11 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                       
+    Write-Host ""                                      
     Write-Host "====ITBros Edit V1.1===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
+
 
     #====DEBUG GUI Elements====
 
