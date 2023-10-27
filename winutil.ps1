@@ -1290,7 +1290,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                      
+    Write-Host ""                                       
     Write-Host "====ITBros Edit V1.2===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
@@ -2473,6 +2473,8 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstalledge" Content="Edge" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallfirefox" Content="Firefox" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalltor" Content="Tor Browser" Margin="5,0"/>
+                                <CheckBox Name="WPFInstalloperagx" Content="Opera GX" Margin="5,0"/>
+
 
                                 <Label Content="Browser AD/Malware Block" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallublock" Content="uBlock Chrome" Margin="5,0"/>
@@ -2493,8 +2495,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallgithubdesktop" Content="GitHub Desktop" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallgolang" Content="GoLang" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalljetbrains" Content="Jetbrains Toolbox" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallnano" Content="Nano" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallneovim" Content="Neovim" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallnodejs" Content="NodeJS" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallnodejslts" Content="NodeJS LTS" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallnvm" Content="Node Version Manager" Margin="5,0"/>
@@ -2505,7 +2505,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallpostman" Content="Postman" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallrustlang" Content="Rust" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallsublime" Content="Sublime" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallunity" Content="Unity Game Engine" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallvisualstudio" Content="Visual Studio 2022" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallvscode" Content="VS Code" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallvscodium" Content="VS Codium" Margin="5,0"/>
@@ -2538,6 +2537,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstalllghub" Content="Logitech G HUB" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalllcicue" Content="CORSAIR iCUE" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallrs3" Content="Razer Synapse" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallstreamdeck" Content="Stream Deck" Margin="5,0"/>
 
                                 <Label Content="Gamer RemoteDesktop" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallparsec" Content="Parsec Free (Best)" Margin="5,0"/>
@@ -2586,6 +2586,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="4" Margin="10">
                                 <Label Content="Utilities" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstall7zip" Content="7-Zip" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallditto" Content="Ditto" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallalacritty" Content="Alacritty Terminal" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallautohotkey" Content="AutoHotkey" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallbitwarden" Content="Bitwarden" Margin="5,0"/>
@@ -3451,6 +3452,18 @@ $sync.configs.applications = '{
 	"WPFInstallparsec": {
 	"Winget": "na",
 	"choco": "parsec"
+	},
+	"WPFInstalloperagx": {
+	"Winget": "Opera.OperaGX",
+	"choco": "opera-gx"
+	},
+	"WPFInstallstreamdeck": {
+	"Winget": "na",
+	"choco": "streamdeck"
+	},
+	"WPFInstallditto": {
+	"Winget": "Ditto.Ditto",
+	"choco": "ditto"
 	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",

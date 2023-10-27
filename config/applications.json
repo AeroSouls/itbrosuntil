@@ -675,6 +675,18 @@
 	"Winget": "na",
 	"choco": "parsec"
 	},
+	"WPFInstalloperagx": {
+	"Winget": "Opera.OperaGX",
+	"choco": "opera-gx"
+	},
+	"WPFInstallstreamdeck": {
+	"Winget": "na",
+	"choco": "streamdeck"
+	},
+	"WPFInstallditto": {
+	"Winget": "Ditto.Ditto",
+	"choco": "ditto"
+	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"
