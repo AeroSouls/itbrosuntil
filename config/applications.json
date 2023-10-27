@@ -659,6 +659,22 @@
 	"Winget": "Lazesoft.LazesoftRecovery",
 	"choco": "na"
 	},
+	"WPFInstalllghub": {
+	"Winget": "Logitech.GHUB",
+	"choco": "na"
+	},
+	"WPFInstalllcicue": {
+	"Winget": "Corsair.iCUE.4",
+	"choco": "na"
+	},
+	"WPFInstallrs3": {
+	"Winget": "na",
+	"choco": "razer-synapse-3"
+	},
+	"WPFInstallparsec": {
+	"Winget": "na",
+	"choco": "parsec"
+	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"
