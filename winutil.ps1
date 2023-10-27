@@ -2568,6 +2568,8 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallwinscp" Content="WinSCP" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallwireshark" Content="WireShark" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallteamviewer" Content="TeamViewer" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallhwinfo" Content="All Hardware Info" Margin="5,0"/>
+
 
                                 <Label Content="Repair/Check Tools" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalllrs" Content="Lazesoft Recovery Suite" Margin="5,0"/>
@@ -2586,7 +2588,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallddu" Content="Display Driver Uninstaller" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallesearch" Content="Everything Search" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallgpuz" Content="GPU-Z" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallhwinfo" Content="HWInfo" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallmalwarebytes" Content="MalwareBytes" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallmsiafterburner" Content="MSI Afterburner" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallopenshell" Content="Open Shell (Start Menu)" Margin="5,0"/>
