@@ -311,11 +311,14 @@ function Get-LatestHash {
 }
 
 function Install-WinUtilWinget {
+
     <#
+
     .SYNOPSIS
         Installs Winget if it is not already installed
+
     #>
-    Try {
+    Try{
         Write-Host "Checking if Winget is Installed..."
         if (Test-WinUtilPackageManager -winget) {
             # Checks if winget executable exists and if the Windows Version is 1809 or higher
@@ -324,37 +327,16 @@ function Install-WinUtilWinget {
         }
 
         # Gets the computer's information
-        if ($null -eq $sync.ComputerInfo) {
+        if ($null -eq $sync.ComputerInfo){
             $ComputerInfo = Get-ComputerInfo -ErrorAction Stop
-        } else {
+        }
+        Else {
             $ComputerInfo = $sync.ComputerInfo
         }
 
-        if ($ComputerInfo.WindowsVersion -lt "1809") {
+        if (($ComputerInfo.WindowsVersion) -lt "1809") {
             # Checks if Windows Version is too old for winget
             Write-Host "Winget is not supported on this version of Windows (Pre-1809)"
-            
-            # Specify the app name for which you want to download the file
-            $appName = "WPFInstalladobe"
-
-            # Call the DownloadLinks.ps1 script to retrieve the download link
-            .\Invoke-WPFDownloadLinks.ps1
-
-            # Retrieve the download link for the specified app
-            $downloadLink = $DownloadLinks[$appName]
-
-            if ($downloadLink) {
-                # Specify the output path where the downloaded file will be saved
-                $outputPath = Join-Path -Path $tempFolder -ChildPath "DownloadedApp.exe"
-
-                # Download the file
-                Download-File -url $downloadLink -outputPath $outputPath
-
-                Write-Host "Downloaded $appName to $outputPath"
-            } else {
-                Write-Host "Download link not found for $appName."
-            }
-
             return
         }
 
@@ -362,7 +344,8 @@ function Install-WinUtilWinget {
         Start-Process -Verb runas -FilePath powershell.exe -ArgumentList "choco install winget"
 
         Write-Host "Winget Installed"
-    } Catch {
+    }
+    Catch{
         throw [WingetFailedInstall]::new('Failed to install')
     }
 }
@@ -1134,12 +1117,6 @@ function Invoke-WPFControlPanel {
         "WPFPaneluser"    {cmd /c "control userpasswords2"}
     }
 }
-# DownloadLinks.ps1
-
-# Define download links 
-$DownloadLinks = @{
-    "WPFInstalltestdl" = "https://itbros.gg/download/ITBros_64-Support.exe"
-}
 function Invoke-WPFFeatureInstall {
     <#
 
@@ -1313,7 +1290,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                       
+    Write-Host ""                                        
     Write-Host "====ITBros.gg===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
@@ -2632,9 +2609,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstalllrs" Content="Lazesoft Recovery Suite" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallcdisk" Content="CrystalDiskInfo" Margin="5,0"/>
 
-                                <Label Content="Remote Support Installer" FontSize="16" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalltestdl" Content="Support" Margin="5,0"/>
-
 
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="4" Margin="10">
@@ -3518,10 +3492,6 @@ $sync.configs.applications = '{
 	"WPFInstallditto": {
 	"Winget": "Ditto.Ditto",
 	"choco": "ditto"
-	},
-	"WPFInstalltestdl": {
-	"Winget": "na",
-	"choco": "na"
 	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",

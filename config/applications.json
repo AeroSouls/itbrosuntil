@@ -687,10 +687,6 @@
 	"Winget": "Ditto.Ditto",
 	"choco": "ditto"
 	},
-	"WPFInstalltestdl": {
-	"Winget": "na",
-	"choco": "na"
-	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"
