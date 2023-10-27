@@ -1290,7 +1290,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                        
+    Write-Host ""                                      
     Write-Host "====ITBros Edit V1.2===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
@@ -2567,7 +2567,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstalltidal" Content="Tidal" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallvlc" Content="VLC (Video Player)" Margin="5,0"/>
 
-                                <Label Content="Support Tools" FontSize="16" Margin="5,0"/>
+                                <Label Content="Tech Tools" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalladvancedip" Content="Advanced IP Scanner" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallputty" Content="Putty" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallventoy" Content="Ventoy" Margin="5,0"/>
