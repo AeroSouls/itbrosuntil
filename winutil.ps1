@@ -1290,7 +1290,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                       
+    Write-Host ""                                        
     Write-Host "====ITBros Edit V1.2===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
@@ -2586,7 +2586,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="4" Margin="10">
                                 <Label Content="Utilities" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstall7zip" Content="7-Zip" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallditto" Content="Ditto" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallditto" Content="Ditto (Copy Paste Manager)" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallalacritty" Content="Alacritty Terminal" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallautohotkey" Content="AutoHotkey" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallbitwarden" Content="Bitwarden" Margin="5,0"/>
