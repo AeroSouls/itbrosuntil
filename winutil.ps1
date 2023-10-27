@@ -1290,7 +1290,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                       
+    Write-Host ""                                      
     Write-Host "====ITBros Edit V1.1===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
@@ -2568,8 +2568,10 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallwinscp" Content="WinSCP" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallwireshark" Content="WireShark" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallteamviewer" Content="TeamViewer" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallcdisk" Content="CrystalDiskInfo" Margin="5,0"/>
+
+                                <Label Content="Repair/Check Tools" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalllrs" Content="Lazesoft Recovery Suite" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallcdisk" Content="CrystalDiskInfo" Margin="5,0"/>
 
 
                             </StackPanel>
