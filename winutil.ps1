@@ -1420,11 +1420,13 @@ function Invoke-WPFImpex {
 }
 function Invoke-WPFInstall {
     <#
+
     .SYNOPSIS
         Installs the selected programs using winget
+
     #>
 
-    if ($sync.ProcessRunning) {
+    if($sync.ProcessRunning){
         $msg = "Install process is currently running."
         [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
         return
@@ -1438,53 +1440,31 @@ function Invoke-WPFInstall {
         return
     }
 
-    Invoke-WPFRunspace -ArgumentList $WingetInstall -ScriptBlock {
+    Invoke-WPFRunspace -ArgumentList $WingetInstall -scriptblock {
         param($WingetInstall)
-        try {
+        try{
             $sync.ProcessRunning = $true
 
-            # Check if winget is installed
-            if (Test-WinUtilPackageManager -winget) {
-                # winget is installed, proceed with installation
-                Install-WinUtilProgramWinget -ProgramsToInstall $WingetInstall
+            # Ensure winget is installed
+            Install-WinUtilWinget
 
-                $ButtonType = [System.Windows.MessageBoxButton]::OK
-                $MessageboxTitle = "Installs are Finished "
-                $Messageboxbody = ("Done")
-                $MessageIcon = [System.Windows.MessageBoxImage]::Information
+            # Install all selected programs in new window
+            Install-WinUtilProgramWinget -ProgramsToInstall $WingetInstall
 
-                [System.Windows.MessageBox]::Show($Messageboxbody, $MessageboxTitle, $ButtonType, $MessageIcon)
+            $ButtonType = [System.Windows.MessageBoxButton]::OK
+            $MessageboxTitle = "Installs are Finished "
+            $Messageboxbody = ("Done")
+            $MessageIcon = [System.Windows.MessageBoxImage]::Information
 
-                Write-Host "==========================================="
-                Write-Host "--      Installs have finished          ---"
-                Write-Host "==========================================="
-            } else {
-                # winget is not installed, proceed to download links...
-
-                # Specify the app name for which you want to download
-                $appName = "WPFInstalladobe"  # Change this to the desired app name
-
-                # Call the DownloadLinks.ps1 script to retrieve the download link
-                .\Invoke-WPFDownloadLinks.ps1
-                $downloadLink = $DownloadLinks[$appName]
-
-                if ($downloadLink) {
-                    # Specify the output path where the downloaded file will be saved
-                    $outputPath = Join-Path -Path $tempFolder -ChildPath "DownloadedApp.exe"
-
-                    # Download the file
-                    Download-File -url $downloadLink -outputPath $outputPath
-
-                    Write-Host "Downloaded $appName to $outputPath"
-                } else {
-                    Write-Host "Download link not found for $appName."
-                }
-            }
+            [System.Windows.MessageBox]::Show($Messageboxbody, $MessageboxTitle, $ButtonType, $MessageIcon)
 
             Write-Host "==========================================="
-        } catch {
+            Write-Host "--      Installs have finished          ---"
             Write-Host "==========================================="
-            Write-Host "--      Installation failed             ---"
+        }
+        Catch {
+            Write-Host "==========================================="
+            Write-Host "--      Winget failed to install        ---"
             Write-Host "==========================================="
         }
         $sync.ProcessRunning = $False
