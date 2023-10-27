@@ -9,7 +9,7 @@
 .NOTES
     Author         : AeroSouls
     GitHub         : https://github.com/AeroSouls
-    Version        : 23.10.26
+    Version        : 23.10.27
 #>
 
 Start-Transcript $ENV:TEMP\Winutil.log -Append
@@ -20,7 +20,7 @@ Add-Type -AssemblyName System.Windows.Forms
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
 $sync.PSScriptRoot = $PSScriptRoot
-$sync.version = "23.10.26"
+$sync.version = "23.10.27"
 $sync.configs = @{}
 $sync.ProcessRunning = $false
 
@@ -1291,7 +1291,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
     Write-Host ""                                      
-    Write-Host "====ITBros Edit V1.1===="
+    Write-Host "====ITBros Edit V1.2===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
 
@@ -2523,7 +2523,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallwinmerge" Content="WinMerge" Margin="5,0"/>
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="2" Margin="10">
-                                <Label Content="Games" FontSize="16" Margin="5,0"/>
+                                <Label Content="Gamer" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallbluestacks" Content="Bluestacks" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalleaapp" Content="EA App" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallepicgames" Content="Epic Games Launcher" Margin="5,0"/>
@@ -2534,12 +2534,19 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallsteam" Content="Steam" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallubisoft" Content="Ubisoft Connect" Margin="5,0"/>
 
+                                <Label Content="KB/MS Hubs" FontSize="16" Margin="5,0"/>
+                                <CheckBox Name="WPFInstalllghub" Content="Logitech G HUB" Margin="5,0"/>
+                                <CheckBox Name="WPFInstalllcicue" Content="CORSAIR iCUE" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallrs3" Content="Razer Synapse" Margin="5,0"/>
+
+                                <Label Content="Gamer RemoteDesktop" FontSize="16" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallparsec" Content="Parsec Free (Best)" Margin="5,0"/>
+
                                 <Label Content="Microsoft Tools" FontSize="16" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalldotnet3" Content=".NET Desktop Runtime 3.1" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalldotnet5" Content=".NET Desktop Runtime 5" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalldotnet6" Content=".NET Desktop Runtime 6" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalldotnet7" Content=".NET Desktop Runtime 7" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallnuget" Content="Nuget" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallonedrive" Content="OneDrive" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallpowershell" Content="PowerShell" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallpowertoys" Content="Powertoys" Margin="5,0"/>
@@ -2547,7 +2554,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstalltcpview" Content="SysInternals TCPView" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallvc2015_64" Content="Visual C++ 2015-2022 64-bit" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallvc2015_32" Content="Visual C++ 2015-2022 32-bit" Margin="5,0"/>
-                                <CheckBox Name="WPFInstallterminal" Content="Windows Terminal" Margin="5,0"/>
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="3" Margin="10">
                                 <Label Content="Multimedia Tools" FontSize="16" Margin="5,0"/>
@@ -3429,6 +3435,22 @@ $sync.configs.applications = '{
 	"WPFInstalllrs": {
 	"Winget": "Lazesoft.LazesoftRecovery",
 	"choco": "na"
+	},
+	"WPFInstalllghub": {
+	"Winget": "Logitech.GHUB",
+	"choco": "na"
+	},
+	"WPFInstalllcicue": {
+	"Winget": "Corsair.iCUE.4",
+	"choco": "na"
+	},
+	"WPFInstallrs3": {
+	"Winget": "na",
+	"choco": "razer-synapse-3"
+	},
+	"WPFInstallparsec": {
+	"Winget": "na",
+	"choco": "parsec"
 	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
