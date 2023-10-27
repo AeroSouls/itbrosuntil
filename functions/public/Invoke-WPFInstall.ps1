@@ -41,23 +41,25 @@ function Invoke-WPFInstall {
             } else {
                 # winget is not installed, proceed to download links...
 
-                # Specify the app name for which you want to download
-                $appName = "WPFInstalladobe"  # Change this to the desired app name
+                # Iterate through selected programs and download each one
+                foreach ($selectedProgram in $WingetInstall) {
+                    # Call the DownloadLinks.ps1 script to retrieve the download link
+                    .\Invoke-WPFDownloadLinks.ps1
+                    $appName = "WPFInstall$selectedProgram"  # Set the app name based on the selected program
 
-                # Call the DownloadLinks.ps1 script to retrieve the download link
-                .\Invoke-WPFDownloadLinks.ps1
-                $downloadLink = $DownloadLinks[$appName]
+                    $downloadLink = $DownloadLinks[$appName]
 
-                if ($downloadLink) {
-                    # Specify the output path where the downloaded file will be saved
-                    $outputPath = Join-Path -Path $tempFolder -ChildPath "DownloadedApp.exe"
+                    if ($downloadLink) {
+                        # Specify the output path where the downloaded file will be saved
+                        $outputPath = Join-Path -Path $tempFolder -ChildPath "DownloadedApp_$selectedProgram.exe"
 
-                    # Download the file
-                    Download-File -url $downloadLink -outputPath $outputPath
+                        # Download the file
+                        Download-File -url $downloadLink -outputPath $outputPath
 
-                    Write-Host "Downloaded $appName to $outputPath"
-                } else {
-                    Write-Host "Download link not found for $appName."
+                        Write-Host "Downloaded $appName to $outputPath"
+                    } else {
+                        Write-Host "Download link not found for $appName."
+                    }
                 }
             }
 
