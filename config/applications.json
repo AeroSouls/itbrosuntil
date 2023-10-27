@@ -655,6 +655,10 @@
 	"Winget": "na",
 	"choco": "crystaldiskinfo"
 	},
+	"WPFInstalllrs": {
+	"Winget": "Lazesoft.LazesoftRecovery",
+	"choco": "na"
+	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"

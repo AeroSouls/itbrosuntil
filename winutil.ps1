@@ -2569,6 +2569,8 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallwireshark" Content="WireShark" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallteamviewer" Content="TeamViewer" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallcdisk" Content="CrystalDiskInfo" Margin="5,0"/>
+                                <CheckBox Name="WPFInstalllrs" Content="Lazesoft Recovery Suite" Margin="5,0"/>
+
 
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="4" Margin="10">
@@ -3420,6 +3422,10 @@ $sync.configs.applications = '{
 	"WPFInstallcdisk": {
 	"Winget": "na",
 	"choco": "crystaldiskinfo"
+	},
+	"WPFInstalllrs": {
+	"Winget": "Lazesoft.LazesoftRecovery",
+	"choco": "na"
 	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
