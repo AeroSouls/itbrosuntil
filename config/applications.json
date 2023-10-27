@@ -651,6 +651,10 @@
 	"Winget": "na",
 	"choco": "sponsorblock-for-youtube-chrome"
 	},
+	"WPFInstallcdisk": {
+	"Winget": "na",
+	"choco": "crystaldiskinfo"
+	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
 		"choco": "zoom"

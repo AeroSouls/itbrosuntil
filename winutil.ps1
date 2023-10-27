@@ -1290,7 +1290,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
     Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
     Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
-    Write-Host ""                                     
+    Write-Host ""                                       
     Write-Host "====ITBros Edit V1.1===="
     Write-Host "=====Windows Toolbox====="
     Write-Host "" 
@@ -2568,6 +2568,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallwinscp" Content="WinSCP" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallwireshark" Content="WireShark" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallteamviewer" Content="TeamViewer" Margin="5,0"/>
+                                <CheckBox Name="WPFInstallcdisk" Content="CrystalDiskInfo" Margin="5,0"/>
 
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="4" Margin="10">
@@ -3415,6 +3416,10 @@ $sync.configs.applications = '{
 	"WPFInstallsblock": {
 	"Winget": "na",
 	"choco": "sponsorblock-for-youtube-chrome"
+	},
+	"WPFInstallcdisk": {
+	"Winget": "na",
+	"choco": "crystaldiskinfo"
 	},
 	"WPFInstallzoom": {
 		"winget": "Zoom.Zoom",
