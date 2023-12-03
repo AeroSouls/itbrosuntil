@@ -235,8 +235,8 @@ $sync["Form"].Add_MouseLeftButtonDown({
 # setting window icon to make it look more professional
 $sync["Form"].Add_Loaded({
    
-    $downloadUrl = "https://christitus.com/images/logo-full.png"
-    $destinationPath = Join-Path $env:TEMP "cttlogo.png"
+    $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
+    $destinationPath = Join-Path $env:TEMP "itblogo.png"
     
     # Check if the file already exists
     if (-not (Test-Path $destinationPath)) {
@@ -313,7 +313,7 @@ $sync["CheckboxFilter"].Add_TextChanged({
 })
 
 
-$downloadUrl = "https://christitus.com/images/logo-full.png"
+$downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
 $destinationPath = Join-Path $env:TEMP "cttlogo.png"
 
 # Check if the file already exists
