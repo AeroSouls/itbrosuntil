@@ -1,9 +1,8 @@
 # Script Metadata
 # Created by AveYo, source: https://raw.githubusercontent.com/AveYo/fox/main/Edge_Removal.bat
-# Powershell Conversion and Refactor done by Chris Titus Tech
 
 # Initial Configuration
-$host.ui.RawUI.WindowTitle = 'Edge Removal - Chris Titus Tech 2023.05.10'
+$host.ui.RawUI.WindowTitle = 'Edge Removal'
 $remove_win32 = @("Microsoft Edge", "Microsoft Edge Update")
 $remove_appx = @("MicrosoftEdge")
 $skip = @() # Optional: @("DevTools")
