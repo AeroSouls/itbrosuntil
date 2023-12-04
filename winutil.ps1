@@ -2017,7 +2017,6 @@ Function Invoke-WPFFormVariables {
     Write-Host "=====Windows Toolbox====="
     Write-Host ""
 
-
     #====DEBUG GUI Elements====
 
     #Write-Host "Found the following interactable elements from our form" -ForegroundColor Cyan
@@ -7957,7 +7956,7 @@ $sync["CheckboxFilter"].Add_TextChanged({
 
 
 $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-$destinationPath = Join-Path $env:TEMP "cttlogo.png"
+$destinationPath = Join-Path $env:TEMP "itblogo.png"
 
 # Check if the file already exists
 if (-not (Test-Path $destinationPath)) {
