@@ -534,6 +534,7 @@ function New-FirstRun {
 	$desktopPath = "$($env:USERPROFILE)\Desktop"
 	# Specify the target PowerShell command
 	$command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'irm https://itbros.gg/win | iex'"
+	$command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'irm https://christitus.com/win | iex'"
 	# Specify the path for the shortcut
 	$shortcutPath = Join-Path $desktopPath 'winutil.lnk'
 	# Create a shell object
