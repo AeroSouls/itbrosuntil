@@ -481,6 +481,12 @@
                             </TextBlock>
                         </ToggleButton.Content>
                     </ToggleButton>
+                    <ToggleButton.Content>
+                            <TextBlock Background="Transparent" Foreground="{ButtonUpdatesForegroundColor}">
+                                <Underline>L</Underline>inks
+                            </TextBlock>
+                        </ToggleButton.Content>
+                    </ToggleButton>
                     <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
                         Background="{ButtonUpdatesBackgroundColor}" Foreground="{ButtonUpdatesForegroundColor}" FontWeight="Bold" Name="WPFTab5BT">
                         <ToggleButton.Content>
@@ -700,7 +706,7 @@
                             <StackPanel Background="{MainBackgroundColor}" Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center" Grid.ColumnSpan="3" Margin="10">
                                 <TextBlock Padding="10">
                                     Note: Hover over items to get a better description. Please be careful as many of these tweaks will heavily modify your system.
-                                    <LineBreak/>Recommended selections are for normal users and if you are unsure do NOT check anything else!
+                                    <LineBreak/>Recommended selections are for normal users and if you are unsure do NOT check anything else! Ask us if you'd like support@itbros.gg
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="0" Margin="10,5">
@@ -850,6 +856,12 @@
                                 <TextBlock Margin="20,0,20,0" Padding="10" TextWrapping="WrapWithOverflow" MaxWidth="300">This completely disables ALL Windows Updates and is NOT RECOMMENDED.<LineBreak/><LineBreak/> However, it can be suitable if you use your system for a select purpose and do not actively browse the internet. <LineBreak/><LineBreak/>Note: Your system will be easier to hack and infect without security updates.</TextBlock>
                                 <TextBlock Text=" " Margin="20,0,20,0" Padding="10" TextWrapping="WrapWithOverflow" MaxWidth="300"/>
                             </StackPanel>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Links" Visibility="Collapsed" Name="WPFTab6">
+                        <Grid Background="#555555">
+                            <Button Name="OpenLinkButton1" Content="Link 1" Click="OpenLinkButton1_Click" />
+                            <Button Name="OpenLinkButton2" Content="Link 2" Click="OpenLinkButton2_Click" />
                         </Grid>
                     </TabItem>
                     <TabItem Header="MicroWin" Visibility="Collapsed" Name="WPFTab5" Width="Auto" Height="Auto">
