@@ -21,7 +21,7 @@ Add-Type -AssemblyName System.Windows.Forms
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
 $sync.PSScriptRoot = $PSScriptRoot
-$sync.version = "23.12.04"
+$sync.version = "23.12.05"
 $sync.configs = @{}
 $sync.ProcessRunning = $false
 
@@ -2016,6 +2016,7 @@ Function Invoke-WPFFormVariables {
     Write-Host "====ITBros.gg===="
     Write-Host "=====Windows Toolbox====="
     Write-Host ""
+
 
     #====DEBUG GUI Elements====
 
@@ -5189,7 +5190,6 @@ $sync.configs.preset = '{
     "WPFEssTweaksAH",
     "WPFEssTweaksDVR",
     "WPFEssTweaksHiber",
-    "WPFEssTweaksHome",
     "WPFEssTweaksLoc",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele",
@@ -5200,7 +5200,6 @@ $sync.configs.preset = '{
   "laptop": [
     "WPFEssTweaksAH",
     "WPFEssTweaksDVR",
-    "WPFEssTweaksHome",
     "WPFEssTweaksLoc",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele",
@@ -5209,7 +5208,6 @@ $sync.configs.preset = '{
     "WPFMiscTweaksLapNum"
   ],
   "minimal": [
-    "WPFEssTweaksHome",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele"
   ]
@@ -5217,7 +5215,7 @@ $sync.configs.preset = '{
 $sync.configs.themes = '{
     "Classic":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#f8f8ff",
+                   "LabelboxForegroundColor":  "#370617",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
@@ -5241,7 +5239,7 @@ $sync.configs.themes = '{
                 },
     "Matrix":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#f8f8ff",
+                   "LabelboxForegroundColor":  "#370617",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
