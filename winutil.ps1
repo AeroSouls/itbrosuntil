@@ -21,7 +21,7 @@ Add-Type -AssemblyName System.Windows.Forms
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
 $sync.PSScriptRoot = $PSScriptRoot
-$sync.version = "23.12.05"
+$sync.version = "23.12.04"
 $sync.configs = @{}
 $sync.ProcessRunning = $false
 
@@ -1802,8 +1802,6 @@ function Invoke-WPFButton {
         "WPFGetInstalledTweaks" {Invoke-WPFGetInstalled -CheckBox "tweaks"}
         "WPFGetIso" {Invoke-WPFGetIso}
         "WPFMicrowin" {Invoke-WPFMicrowin}
-        "OpenLinkButton1" { Start-Process "https://itbros.gg" }
-        "OpenLinkButton2" { Start-Process "https://itbysrc.com" }
     }
 }
 function Invoke-WPFControlPanel {
@@ -2008,17 +2006,16 @@ Function Invoke-WPFFormVariables {
 
     Write-Host ""
     Write-Host ""
-    Write-Host "????????????????????????????????????????????????????????? ?????????????????????  ????????????????????? ????????????????????????"
-    Write-Host "???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????"
-    Write-Host "?????????   ?????????   ?????????????????????????????????????????????????????????   ?????????????????????????????????"
-    Write-Host "?????????   ?????????   ?????????????????????????????????????????????????????????   ?????????????????????????????????"
-    Write-Host "?????????   ?????????   ?????????????????????????????????  ????????????????????????????????????????????????????????????"
-    Write-Host "?????????   ?????????   ????????????????????? ?????????  ????????? ????????????????????? ????????????????????????"
-    Write-Host ""                                       
+    Write-Host "██╗████████╗██████╗ ██████╗  ██████╗ ███████╗"
+    Write-Host "██║╚══██╔══╝██╔══██╗██╔══██╗██╔═══██╗██╔════╝"
+    Write-Host "██║   ██║   ██████╔╝██████╔╝██║   ██║███████╗"
+    Write-Host "██║   ██║   ██╔══██╗██╔══██╗██║   ██║╚════██║"
+    Write-Host "██║   ██║   ██████╔╝██║  ██║╚██████╔╝███████║"
+    Write-Host "╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝"
+    Write-Host ""                                     
     Write-Host "====ITBros.gg===="
     Write-Host "=====Windows Toolbox====="
-    Write-Host "" 
-
+    Write-Host ""
 
     #====DEBUG GUI Elements====
 
@@ -3882,12 +3879,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             </TextBlock>
                         </ToggleButton.Content>
                     </ToggleButton>
-                    <ToggleButton.Content>
-                            <TextBlock Background="Transparent" Foreground="{ButtonUpdatesForegroundColor}">
-                                <Underline>L</Underline>inks
-                            </TextBlock>
-                        </ToggleButton.Content>
-                    </ToggleButton>
                     <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
                         Background="{ButtonUpdatesBackgroundColor}" Foreground="{ButtonUpdatesForegroundColor}" FontWeight="Bold" Name="WPFTab5BT">
                         <ToggleButton.Content>
@@ -4107,7 +4098,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             <StackPanel Background="{MainBackgroundColor}" Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Center" Grid.ColumnSpan="3" Margin="10">
                                 <TextBlock Padding="10">
                                     Note: Hover over items to get a better description. Please be careful as many of these tweaks will heavily modify your system.
-                                    <LineBreak/>Recommended selections are for normal users and if you are unsure do NOT check anything else! Ask us if you''d like support@itbros.gg
+                                    <LineBreak/>Recommended selections are for normal users and if you are unsure do NOT check anything else!
                                 </TextBlock>
                             </StackPanel>
                             <StackPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="1" Grid.Column="0" Margin="10,5">
@@ -4257,12 +4248,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <TextBlock Margin="20,0,20,0" Padding="10" TextWrapping="WrapWithOverflow" MaxWidth="300">This completely disables ALL Windows Updates and is NOT RECOMMENDED.<LineBreak/><LineBreak/> However, it can be suitable if you use your system for a select purpose and do not actively browse the internet. <LineBreak/><LineBreak/>Note: Your system will be easier to hack and infect without security updates.</TextBlock>
                                 <TextBlock Text=" " Margin="20,0,20,0" Padding="10" TextWrapping="WrapWithOverflow" MaxWidth="300"/>
                             </StackPanel>
-                        </Grid>
-                    </TabItem>
-                    <TabItem Header="Links" Visibility="Collapsed" Name="WPFTab6">
-                        <Grid Background="#555555">
-                            <Button Name="OpenLinkButton1" Content="Link 1" Click="OpenLinkButton1_Click" />
-                            <Button Name="OpenLinkButton2" Content="Link 2" Click="OpenLinkButton2_Click" />
                         </Grid>
                     </TabItem>
                     <TabItem Header="MicroWin" Visibility="Collapsed" Name="WPFTab5" Width="Auto" Height="Auto">
@@ -5204,6 +5189,7 @@ $sync.configs.preset = '{
     "WPFEssTweaksAH",
     "WPFEssTweaksDVR",
     "WPFEssTweaksHiber",
+    "WPFEssTweaksHome",
     "WPFEssTweaksLoc",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele",
@@ -5214,6 +5200,7 @@ $sync.configs.preset = '{
   "laptop": [
     "WPFEssTweaksAH",
     "WPFEssTweaksDVR",
+    "WPFEssTweaksHome",
     "WPFEssTweaksLoc",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele",
@@ -5222,6 +5209,7 @@ $sync.configs.preset = '{
     "WPFMiscTweaksLapNum"
   ],
   "minimal": [
+    "WPFEssTweaksHome",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele"
   ]
@@ -5229,7 +5217,7 @@ $sync.configs.preset = '{
 $sync.configs.themes = '{
     "Classic":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#370617",
+                   "LabelboxForegroundColor":  "#f8f8ff",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
@@ -5253,7 +5241,7 @@ $sync.configs.themes = '{
                 },
     "Matrix":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#370617",
+                   "LabelboxForegroundColor":  "#f8f8ff",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
