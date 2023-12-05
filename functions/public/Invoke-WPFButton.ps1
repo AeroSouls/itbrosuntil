@@ -55,7 +55,5 @@ function Invoke-WPFButton {
         "WPFGetInstalledTweaks" {Invoke-WPFGetInstalled -CheckBox "tweaks"}
         "WPFGetIso" {Invoke-WPFGetIso}
         "WPFMicrowin" {Invoke-WPFMicrowin}
-        "OpenLinkButton1" { Start-Process "https://itbros.gg" }
-        "OpenLinkButton2" { Start-Process "https://itbysrc.com" }
     }
 }
