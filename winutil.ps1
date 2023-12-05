@@ -21,7 +21,7 @@ Add-Type -AssemblyName System.Windows.Forms
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
 $sync.PSScriptRoot = $PSScriptRoot
-$sync.version = "23.12.05"
+$sync.version = "23.12.04"
 $sync.configs = @{}
 $sync.ProcessRunning = $false
 
@@ -2016,7 +2016,6 @@ Function Invoke-WPFFormVariables {
     Write-Host "====ITBros.gg===="
     Write-Host "=====Windows Toolbox====="
     Write-Host ""
-
 
     #====DEBUG GUI Elements====
 
@@ -7878,8 +7877,8 @@ $sync["Form"].Add_MouseLeftButtonDown({
 # setting window icon to make it look more professional
 $sync["Form"].Add_Loaded({
    
-    $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-black-on-transparent-background.png"
-    $destinationPath = Join-Path $env:TEMP "itblogob.png"
+    $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
+    $destinationPath = Join-Path $env:TEMP "itblogo.png"
     
     # Check if the file already exists
     if (-not (Test-Path $destinationPath)) {
@@ -7956,8 +7955,8 @@ $sync["CheckboxFilter"].Add_TextChanged({
 })
 
 
-$downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-black-on-transparent-background.png"
-$destinationPath = Join-Path $env:TEMP "itblogob.png"
+$downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
+$destinationPath = Join-Path $env:TEMP "itblogo.png"
 
 # Check if the file already exists
 if (-not (Test-Path $destinationPath)) {
