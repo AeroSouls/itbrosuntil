@@ -1,7 +1,7 @@
 {
     "Classic":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#f8f8ff",
+                   "LabelboxForegroundColor":  "#370617",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
@@ -25,7 +25,7 @@
                 },
     "Matrix":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#f8f8ff",
+                   "LabelboxForegroundColor":  "#370617",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
