@@ -3,7 +3,6 @@
     "WPFEssTweaksAH",
     "WPFEssTweaksDVR",
     "WPFEssTweaksHiber",
-    "WPFEssTweaksHome",
     "WPFEssTweaksLoc",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele",
@@ -14,7 +13,6 @@
   "laptop": [
     "WPFEssTweaksAH",
     "WPFEssTweaksDVR",
-    "WPFEssTweaksHome",
     "WPFEssTweaksLoc",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele",
@@ -23,7 +21,6 @@
     "WPFMiscTweaksLapNum"
   ],
   "minimal": [
-    "WPFEssTweaksHome",
     "WPFEssTweaksOO",
     "WPFEssTweaksTele"
   ]
