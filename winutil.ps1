@@ -5215,7 +5215,7 @@ $sync.configs.preset = '{
 $sync.configs.themes = '{
     "Classic":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#FFFFFF",
+                   "LabelboxForegroundColor":  "#f8f8ff",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
@@ -5239,7 +5239,7 @@ $sync.configs.themes = '{
                 },
     "Matrix":  {
                    "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#FFFFFF",
+                   "LabelboxForegroundColor":  "#f8f8ff",
                    "MainForegroundColor":  "#F71616",
                    "MainBackgroundColor":  "#000000",
                    "LabelBackgroundColor":  "#000000",
