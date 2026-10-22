@@ -535,10 +535,6 @@
 		"winget": "Alex313031.Thorium",
 		"choco": "na"
 	},
-	"WPFInstalltor": {
-		"Winget": "TorProject.TorBrowser",
-		"choco": "tor-browser"
-	},
 	"WPFInstalltreesize": {
 		"winget": "JAMSoftware.TreeSize.Free",
 		"choco": "treesizefree"
