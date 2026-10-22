@@ -6,6 +6,14 @@ Windows utility and troubleshooting toolkit for ITBros LLC. The original Install
 
 Use Windows PowerShell 5.1 on a trusted Windows computer. Download `winutil.ps1` from this repository and review the script before running it. This utility requests administrator elevation. The compiled `winutil.ps1` is generated from the source by `Compile.ps1` and should not be edited directly.
 
+## Technician interface
+
+- **IT Support opens automatically** when the utility starts; its navigation button is first.
+- Modern dark palette, rounded buttons, and clear two-column cards with vertical scrolling.
+- Filter the 57 support tools by name or category using **Search tools**. `Ctrl+F` focuses support search from IT Support, or selects the dedicated application search on other tabs.
+- Install, Tweaks, Config, Updates, and MicroWin are preserved.
+- Navigation shortcuts: `Alt+S` (Support), `Alt+I` (Install), `Alt+T` (Tweaks), `Alt+C` (Config), `Alt+U` (Updates), and `Alt+M` (MicroWin).
+
 ## IT Support tab
 
 - **Windows and System**: Control Panel, Device Manager, Event Viewer, Services, Task Scheduler, installed programs, and more.
