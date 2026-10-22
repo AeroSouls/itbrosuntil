@@ -296,7 +296,7 @@ function Invoke-WPFIPScanner {
             $summary = "XML line $($errorDetail.LineNumber), position $($errorDetail.LinePosition): $summary"
         }
         [void][System.Windows.MessageBox]::Show(
-            ("IP Scanner TEST v0.2 could not open." + [Environment]::NewLine + [Environment]::NewLine + $summary),
+            ("IP Scanner TEST v0.3 could not open." + [Environment]::NewLine + [Environment]::NewLine + $summary),
             'ITBros IP Scanner', 'OK', 'Error'
         )
         return
