@@ -137,7 +137,7 @@
         <!-- TextBlock template -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{LabelboxForegroundColor}"/>
-            <Setter Property="Background" Value="{LabelBackgroundColor}"/>
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
         <!-- Modern navigation: subtle by default, red when active -->
         <Style x:Key="ModernNav" TargetType="ToggleButton">
@@ -200,6 +200,41 @@
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
+        <!-- Global button styling for Install, Tweaks, Config, Updates and MicroWin -->
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Foreground" Value="{ButtonForegroundColor}"/>
+            <Setter Property="Background" Value="{ButtonBackgroundColor}"/>
+            <Setter Property="BorderBrush" Value="#394E62"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="MinHeight" Value="31"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="8,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="{ButtonBackgroundMouseoverColor}"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#68849B"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="{ButtonBackgroundPressedColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource ModernNav}"/>
         <!-- Checkbox template -->
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="{MainForegroundColor}"/>
