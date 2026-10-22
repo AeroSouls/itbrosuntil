@@ -200,7 +200,7 @@
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        <!-- Global button styling for Install, Tweaks, Config, Updates and MicroWin -->
+        <!-- Global button styling for Install, Tweaks, Config, Updates -->
         <Style TargetType="Button">
             <Setter Property="Margin" Value="3"/>
             <Setter Property="Foreground" Value="{ButtonForegroundColor}"/>
@@ -474,14 +474,14 @@
                             <ToggleButton Name="WPFTab2BT" Content="Tweaks" Style="{StaticResource ModernNav}" Width="80" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab3BT" Content="Config" Style="{StaticResource ModernNav}" Width="77" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab4BT" Content="Updates" Style="{StaticResource ModernNav}" Width="86" Height="42" Margin="3,0" FontWeight="SemiBold"/>
-                            <ToggleButton Name="WPFTab5BT" Content="MicroWin" Style="{StaticResource ModernNav}" Width="92" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            
                         </StackPanel>
                         <TextBox Grid.Column="2" Name="CheckboxFilter" Text="Ctrl-F to filter" Visibility="Collapsed" Height="38" Width="178"
                                  Style="{StaticResource ModernSearch}" ToolTip="Search applications on the Install tab (Ctrl+F)"/>
                     </Grid>
                 </Border>
                 <ScrollViewer Grid.Row="1" Padding="-1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
-                <TabControl Name="WPFTabNav" Background="{MainBackgroundColor}" Width="Auto" Height="Auto" SelectedIndex="5">
+                <TabControl Name="WPFTabNav" Background="{MainBackgroundColor}" Width="Auto" Height="Auto" SelectedIndex="4">
                     <TabItem Header="Install" Visibility="Collapsed" Name="WPFTab1">
                         <Grid Background="Transparent">
                             <Grid.ColumnDefinitions>
@@ -838,150 +838,6 @@
                             </StackPanel>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="MicroWin" Visibility="Collapsed" Name="WPFTab5" Width="Auto" Height="Auto">
-                        <Grid Width="Auto" Height="Auto">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="4*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <Border BorderBrush="Yellow" CornerRadius="2" BorderThickness="2" Margin="1" Grid.Row="0" Grid.Column="0">
-                            <StackPanel Name="MicrowinMain" Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Column="0" Grid.Row="0">
-                                <StackPanel Background="Transparent" SnapsToDevicePixels="True" Margin="1">
-                                    <TextBlock Margin="1" Padding="1" TextWrapping="Wrap" Foreground="{ComboBoxForegroundColor}">
-                                        Choose a Windows ISO file that you've downloaded. <LineBreak/>
-                                        Check for status in the console.
-                                    </TextBlock>
-                                    <TextBox Name="MicrowinFinalIsoLocation" Background="Transparent" BorderThickness="1" BorderBrush="{MainForegroundColor}"
-                                        Text="ISO location will be printed here"
-                                        IsReadOnly="True"
-                                        TextWrapping="Wrap"
-                                        Foreground="{LabelboxForegroundColor}"
-                                    />
-                                    <Button Name="WPFGetIso" Margin="2" Padding="15">
-                                       <Button.Content>
-                                            <TextBlock Background="Transparent" Foreground="{ButtonForegroundColor}">
-                                                Select Windows <Underline>I</Underline>SO
-                                            </TextBlock>
-                                        </Button.Content>
-                                    </Button>
-                                </StackPanel>
-                                <!-- Visibility="Hidden" -->
-                                <StackPanel Name="MicrowinOptionsPanel" HorizontalAlignment="Left" SnapsToDevicePixels="True" Margin="1" Visibility="Hidden">
-                                    <TextBlock Margin="6" Padding="1" TextWrapping="Wrap">Chose Windows SKU</TextBlock>
-                                    <ComboBox x:Name = "MicrowinWindowsFlavors" Margin="1" />
-                                    <TextBlock Margin="6" Padding="1" TextWrapping="Wrap">Choose Windows features you want to remove from the ISO</TextBlock>
-                                    <CheckBox Name="WPFMicrowinKeepProvisionedPackages" Content="Keep Provisioned Packages" Margin="5,0" ToolTip="Do not remove Microsoft Provisioned packages from the ISO."/>
-                                    <CheckBox Name="WPFMicrowinKeepAppxPackages" Content="Keep Appx Packages" Margin="5,0" ToolTip="Do not remove Microsoft Appx packages from the ISO."/>
-                                    <CheckBox Name="WPFMicrowinKeepDefender" Content="Keep Defender" Margin="5,0" IsChecked="True" ToolTip="Do not remove Microsoft Antivirus from the ISO."/>
-                                    <CheckBox Name="WPFMicrowinKeepEdge" Content="Keep Edge" Margin="5,0" IsChecked="True" ToolTip="Do not remove Microsoft Edge from the ISO."/>
-                                    <Rectangle Fill="{MainForegroundColor}" Height="2" HorizontalAlignment="Stretch" Margin="0,10,0,10"/>
-                                    <CheckBox Name="MicrowinInjectDrivers" Content="Inject drivers (I KNOW WHAT I'M DOING)" Margin="5,0" IsChecked="False" ToolTip="Path to unpacked drivers all sys and inf files for devices that need drivers"/>
-                                    <TextBox Name="MicrowinDriverLocation" Background="Transparent" BorderThickness="1" BorderBrush="{MainForegroundColor}"
-                                        Margin="6"
-                                        Text=""
-                                        IsReadOnly="False"
-                                        TextWrapping="Wrap"
-                                        Foreground="{LabelboxForegroundColor}"
-                                        ToolTip="Path to unpacked drivers all sys and inf files for devices that need drivers"
-                                    />
-                                    <Rectangle Fill="{MainForegroundColor}" Height="2" HorizontalAlignment="Stretch" Margin="0,10,0,10"/>
-                                    <CheckBox Name="WPFMicrowinCopyToUsb" Content="Copy to Ventoy" Margin="5,0" IsChecked="False" ToolTip="Copy to USB disk with a label Ventoy"/>
-                                    <Rectangle Fill="{MainForegroundColor}" Height="2" HorizontalAlignment="Stretch" Margin="0,10,0,10"/>
-                                    <Button Name="WPFMicrowin" Content="Start the process" Margin="2" Padding="15"/>
-                                </StackPanel>
-                                <StackPanel HorizontalAlignment="Left" SnapsToDevicePixels="True" Margin="1" Visibility="Collapsed">
-                                    <TextBlock Name="MicrowinIsoDrive" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                    <TextBlock Name="MicrowinIsoLocation" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                    <TextBlock Name="MicrowinMountDir" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                    <TextBlock Name="MicrowinScratchDir" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                </StackPanel>
-                            </StackPanel>
-                            </Border>
-                            <Border Background="{MainBackgroundColor}" 
-                                VerticalAlignment="Stretch"
-                                HorizontalAlignment="Stretch"
-                                BorderBrush="Yellow" 
-                                CornerRadius="2" 
-                                BorderThickness="2"
-                                Grid.Row="0" Grid.Column="1"
-                                Margin="1">
-                                <StackPanel HorizontalAlignment="Left" Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Visibility="Visible" 
-                                    >
-                                    <TextBlock x:Name = "asciiTextBlock"
-                                        xml:space ="preserve"
-                                        HorizontalAlignment = "Center"
-                                        Margin = "0"
-                                        VerticalAlignment = "Top"
-                                        Height = "Auto"
-                                        Width = "Auto"
-                                        FontSize = "10"
-                                        FontFamily = "Courier New"
-                                    >
-  /\/\  (_)  ___  _ __   ___  / / /\ \ \(_) _ __    
- /    \ | | / __|| '__| / _ \ \ \/  \/ /| || '_ \  
-/ /\/\ \| || (__ | |   | (_) | \  /\  / | || | | | 
-\/    \/|_| \___||_|    \___/   \/  \/  |_||_| |_| 
-                                    </TextBlock>
-                                    <TextBlock Margin="15,15,15,0" 
-                                        Padding="8,8,8,0" 
-                                        VerticalAlignment="Center" 
-                                        TextWrapping="WrapWithOverflow" 
-                                        Height = "Auto"
-                                        Width = "Auto"
-                                        Foreground="{ComboBoxForegroundColor}">
-                                        <Bold>MicroWin features:</Bold><LineBreak/>
-                                        - Remove Telemetry and Tracking <LineBreak/>
-                                        - Add ability to use local accounts <LineBreak/>
-                                        - Remove Wifi requirement to finish install <LineBreak/>
-                                        - Ability to remove Edge <LineBreak/>
-                                        - Ability to remove Defender <LineBreak/>
-                                        - Remove Teams <LineBreak/>
-                                        - Apps debloat <LineBreak/>
-                                        <LineBreak/>
-                                        <LineBreak/>
-
-                                        <Bold>INSTRUCTIONS</Bold> <LineBreak/>
-                                        - Download latest Windows 11 image from Microsoft <LineBreak/>
-                                            https://www.microsoft.com/software-download/windows11
-                                            several minutes to process the ISO depending on your machine. <LineBreak/>
-                                        - Put it somewhere on the C: drive so it is easily accessible <LineBreak/>
-                                        - Launch WinUtil and MicroWin  <LineBreak/>
-                                        - Click on Get Iso image button and wait for WinUtil to process the Image <LineBreak/>
-                                            It will be processed and unpacked which could take some time <LineBreak/>
-                                        - Once done, chose which Windows flavor you want to base your image on <LineBreak/>
-                                        - Chose which features you want to keep <LineBreak/>
-                                        - Click Start Process button <LineBreak/>
-                                        NOTE: Process of creating Windows image will take a long time, please check the Console and wait for it to say "Done" <LineBreak/>
-                                        <Bold>Once it is done the microwin.iso will be in the %temp% directory</Bold> <LineBreak/>
-                                        Copy this image to your Ventoy USB Stick, boot to this image. gg,
-                                        <LineBreak/>
-                                        If you are injecting drivers make sure to put all your inf, sys and dll file for each driver into a separate directory. For example:
-                                    </TextBlock>
-                                    <TextBlock Margin="15,0,15,15" 
-                                        Padding = "1" 
-                                        TextWrapping="WrapWithOverflow" 
-                                        Height = "Auto"
-                                        Width = "Auto"
-                                        VerticalAlignment = "Top"
-                                        Foreground = "{ComboBoxForegroundColor}"
-                                        xml:space = "preserve"
-                                    >
-C:\drivers\
-        |-- Driver1\
-        |   |-- Driver1.inf
-        |   |-- Driver1.sys
-        |-- Driver2\
-        |   |-- Driver2.inf
-        |   |-- Driver2.sys
-        |-- OtherFiles...
-                                    </TextBlock>
-                               </StackPanel>
-                            </Border>
-                        </Grid>
-                    </TabItem>
                     <!-- Modern IT Support dashboard: search and two-column categories -->
                     <TabItem Header="IT Support" Visibility="Collapsed" Name="WPFTab6">
                         <StackPanel Background="{MainBackgroundColor}" Margin="20,18,20,22">
@@ -1050,7 +906,7 @@ C:\drivers\
                                         <DockPanel Margin="5,0,5,12">
                                             <TextBlock DockPanel.Dock="Left" Text="Network Troubleshooting" Foreground="#F3F6FB"
                                                        FontSize="17" FontWeight="SemiBold"/>
-                                            <TextBlock Text="10 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                            <TextBlock Text="11 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
                                                        FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </DockPanel>
                                         <UniformGrid Columns="2">
@@ -1063,6 +919,7 @@ C:\drivers\
                                     <Button Name="WPFSupAdvFirewall" Content="Advanced Firewall" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Advanced Firewall"/>
                                     <Button Name="WPFSupIPConfig" Content="IP Configuration" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="IP Configuration"/>
                                     <Button Name="WPFSupNetstat" Content="Active Connections" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Active Connections"/>
+                                    <Button Name="WPFSupIPScanner" Content="ITBros IP Scanner" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Discover network devices and export to CSV"/>
                                     <Button Name="WPFSupDNSLookup" Content="DNS Lookup" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="DNS Lookup"/>
                                         </UniformGrid>
                                     </StackPanel>

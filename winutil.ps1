@@ -829,570 +829,7 @@ function Invoke-WinUtilTweaks {
 
     }
 }
-function Remove-Features([switch] $dumpFeatures = $false, [switch] $keepDefender = $false) {
-<#
 
-    .SYNOPSIS
-        Removes certain features from ISO image
-
-    .PARAMETER Name
-        dumpFeatures - Dumps all features found in the ISO into a file called allfeaturesdump.txt. This file can be examined and used to decide what to remove.
-		keepDefender - Should Defender be removed from the ISO?
-
-    .EXAMPLE
-        Remove-Features -keepDefender:$false
-
-#>
-	$appxlist = dism /image:$scratchDir /Get-Features | Select-String -Pattern "Feature Name : " -CaseSensitive -SimpleMatch
-	$appxlist = $appxlist -split "Feature Name : " | Where-Object {$_}
-	if ($dumpFeatures)
-	{
-		$appxlist > allfeaturesdump.txt
-	}
-
-	$appxlist = $appxlist | Where-Object {
-		$_ -NotLike "*Printing*" -AND
-		$_ -NotLike "*TelnetClient*" -AND
-		$_ -NotLike "*PowerShell*" -AND
-		$_ -NotLike "*NetFx*"
-	}
-
-	if ($keepDefender) { $appxlist = $appxlist | Where-Object { $_ -NotLike "*Defender*" }}
-
-	foreach($feature in $appxlist)
-	{
-		$status = "Removing feature $feature"
-		Write-Progress -Activity "Removing features" -Status $status -PercentComplete ($counter++/$appxlist.Count*100)
-		Write-Debug "Removing feature $feature"
-		# dism /image:$scratchDir /Disable-Feature /FeatureName:$feature /Remove /NoRestart > $null
-	}
-	Write-Progress -Activity "Removing features" -Status "Ready" -Completed
-}
-
-function Remove-Packages
-{
-	$appxlist = dism /Image:$scratchDir /Get-Packages | Select-String -Pattern "Package Identity : " -CaseSensitive -SimpleMatch
-	$appxlist = $appxlist -split "Package Identity : " | Where-Object {$_}
-
-	$appxlist = $appxlist | Where-Object {
-			$_ -NotLike "*ApplicationModel*" -AND
-			$_ -NotLike "*indows-Client-LanguagePack*" -AND
-			$_ -NotLike "*LanguageFeatures-Basic*" -AND
-			$_ -NotLike "*Package_for_ServicingStack*" -AND
-			$_ -NotLike "*.NET*" -AND
-			$_ -NotLike "*Store*" -AND
-			$_ -NotLike "*VCLibs*" -AND
-			$_ -NotLike "*AAD.BrokerPlugin",
-			$_ -NotLike "*LockApp*" -AND
-			$_ -NotLike "*Notepad*" -AND
-			$_ -NotLike "*immersivecontrolpanel*" -AND
-			$_ -NotLike "*ContentDeliveryManager*" -AND
-			$_ -NotLike "*PinningConfirMationDialog*" -AND
-			$_ -NotLike "*SecHealthUI*" -AND
-			$_ -NotLike "*SecureAssessmentBrowser*" -AND
-			$_ -NotLike "*PrintDialog*" -AND
-			$_ -NotLike "*AssignedAccessLockApp*" -AND
-			$_ -NotLike "*OOBENetworkConnectionFlow*" -AND
-			$_ -NotLike "*Apprep.ChxApp*" -AND
-			$_ -NotLike "*CBS*" -AND
-			$_ -NotLike "*OOBENetworkCaptivePortal*" -AND
-			$_ -NotLike "*PeopleExperienceHost*" -AND
-			$_ -NotLike "*ParentalControls*" -AND
-			$_ -NotLike "*Win32WebViewHost*" -AND
-			$_ -NotLike "*InputApp*" -AND
-			$_ -NotLike "*AccountsControl*" -AND
-			$_ -NotLike "*AsyncTextService*" -AND
-			$_ -NotLike "*CapturePicker*" -AND
-			$_ -NotLike "*CredDialogHost*" -AND
-			$_ -NotLike "*BioEnrollMent*" -AND
-			$_ -NotLike "*ShellExperienceHost*" -AND
-			$_ -NotLike "*DesktopAppInstaller*" -AND
-			$_ -NotLike "*WebMediaExtensions*" -AND
-			$_ -NotLike "*WMIC*" -AND
-			$_ -NotLike "*UI.XaML*"	
-		} 
-
-	foreach ($appx in $appxlist)
-	{
-		$status = "Removing $appx"
-		Write-Progress -Activity "Removing Apps" -Status $status -PercentComplete ($counter++/$appxlist.Count*100)
-		dism /image:$scratchDir /Remove-Package /PackageName:$appx /NoRestart
-	}
-	Write-Progress -Activity "Removing Apps" -Status "Ready" -Completed
-}
-
-function Remove-ProvisionedPackages
-{
-	$appxProvisionedPackages = Get-AppxProvisionedPackage -Path "$($scratchDir)" | Where-Object	{
-			$_.PackageName -NotLike "*AppInstaller*" -AND
-			$_.PackageName -NotLike "*Store*" -and
-			$_.PackageName -NotLike "*dism*" -and
-			$_.PackageName -NotLike "*Foundation*" -and
-			$_.PackageName -NotLike "*FodMetadata*" -and
-			$_.PackageName -NotLike "*LanguageFeatures*" -and
-			$_.PackageName -NotLike "*Notepad*" -and
-			$_.PackageName -NotLike "*Printing*" -and
-			$_.PackageName -NotLike "*Wifi*" -and
-			$_.PackageName -NotLike "*Foundation*" 
-		} 
-
-	$counter = 0
-	foreach ($appx in $appxProvisionedPackages)
-	{
-		$status = "Removing Provisioned $appx"
-		Write-Progress -Activity "Removing Provisioned Apps" -Status $status -PercentComplete ($counter++/$appxProvisionedPackages.Count*100)
-		dism /image:$scratchDir /Remove-ProvisionedAppxPackage /PackageName:$appx /NoRestart
-								
-	}
-	Write-Progress -Activity "Removing Provisioned Apps" -Status "Ready" -Completed
-}
-
-function Copy-ToUSB([string] $fileToCopy)
-{
-	foreach ($volume in Get-Volume) {
-		if ($volume -and $volume.FileSystemLabel -ieq "ventoy") {
-			$destinationPath = "$($volume.DriveLetter):\"
-			#Copy-Item -Path $fileToCopy -Destination $destinationPath -Force
-			# Get the total size of the file
-			$totalSize = (Get-Item $fileToCopy).length
-
-			Copy-Item -Path $fileToCopy -Destination $destinationPath -Verbose -Force -Recurse -Container -PassThru |
-				ForEach-Object {
-					# Calculate the percentage completed
-					$completed = ($_.BytesTransferred / $totalSize) * 100
-
-					# Display the progress bar
-					Write-Progress -Activity "Copying File" -Status "Progress" -PercentComplete $completed -CurrentOperation ("{0:N2} MB / {1:N2} MB" -f ($_.BytesTransferred / 1MB), ($totalSize / 1MB))
-				}
-
-			Write-Host "File copied to Ventoy drive $($volume.DriveLette)"
-			return
-		}
-	}
-	Write-Host "Ventoy USB Key is not inserted"
-}
-
-function Remove-FileOrDirectory([string] $pathToDelete, [string] $mask = "", [switch] $Directory = $false)
-{
-	if(([string]::IsNullOrEmpty($pathToDelete))) { return }
-	if (-not (Test-Path -Path "$($pathToDelete)")) { return }
-
-	$yesNo = Get-LocalizedYesNo
-
-	# Specify the path to the directory
-	# $directoryPath = "$($scratchDir)\Windows\System32\LogFiles\WMI\RtBackup"
-	# takeown /a /r /d $yesNo[0] /f "$($directoryPath)" > $null
-	# icacls "$($directoryPath)" /q /c /t /reset > $null
-	# icacls $directoryPath /setowner "*S-1-5-32-544"
-	# icacls $directoryPath /grant "*S-1-5-32-544:(OI)(CI)F" /t /c /q
-	# Remove-Item -Path $directoryPath -Recurse -Force
-
-	# # Grant full control to BUILTIN\Administrators using icacls
-	# $directoryPath = "$($scratchDir)\Windows\System32\WebThreatDefSvc" 
-	# takeown /a /r /d $yesNo[0] /f "$($directoryPath)" > $null
-	# icacls "$($directoryPath)" /q /c /t /reset > $null
-	# icacls $directoryPath /setowner "*S-1-5-32-544"
-	# icacls $directoryPath /grant "*S-1-5-32-544:(OI)(CI)F" /t /c /q
-	# Remove-Item -Path $directoryPath -Recurse -Force
-	
-	$itemsToDelete = [System.Collections.ArrayList]::new()
-
-	if ($mask -eq "")
-	{
-		Write-Debug "Adding $($pathToDelete) to array."
-		[void]$itemsToDelete.Add($pathToDelete)
-	}
-	else 
-	{
-		Write-Debug "Adding $($pathToDelete) to array and mask is $($mask)" 
-		if ($Directory)	{ $itemsToDelete = Get-ChildItem $pathToDelete -Include $mask -Recurse -Directory }
-		else { $itemsToDelete = Get-ChildItem $pathToDelete -Include $mask -Recurse }
-	}
-
-	foreach($itemToDelete in $itemsToDelete)
-	{
-		$status = "Deleteing $($itemToDelete)"
-		Write-Progress -Activity "Removing Items" -Status $status -PercentComplete ($counter++/$itemsToDelete.Count*100)
-
-		if (Test-Path -Path "$($itemToDelete)" -PathType Container) 
-		{
-			$status = "Deleting directory: $($itemToDelete)"
-
-			takeown /r /d $yesNo[0] /a /f "$($itemToDelete)"
-			icacls "$($itemToDelete)" /q /c /t /reset
-			icacls $itemToDelete /setowner "*S-1-5-32-544"
-			icacls $itemToDelete /grant "*S-1-5-32-544:(OI)(CI)F" /t /c /q
-			Remove-Item -Force -Recurse "$($itemToDelete)"
-		}
-		elseif (Test-Path -Path "$($itemToDelete)" -PathType Leaf)
-		{
-			$status = "Deleting file: $($itemToDelete)"
-
-			takeown /a /f "$($itemToDelete)"
-			icacls "$($itemToDelete)" /q /c /t /reset
-			icacls "$($itemToDelete)" /setowner "*S-1-5-32-544"
-			icacls "$($itemToDelete)" /grant "*S-1-5-32-544:(OI)(CI)F" /t /c /q
-			Remove-Item -Force "$($itemToDelete)"
-		}
-	}
-	Write-Progress -Activity "Removing Items" -Status "Ready" -Completed
-}
-
-function New-Unattend {
-
-	# later if we wont to remove even more bloat EU requires MS to remove everything from English(world)
-	# Below is an example how to do it we probably should create a drop down with common locals
-	# 	<settings pass="specialize">
-	#     <!-- Specify English (World) locale -->
-	#     <component name="Microsoft-Windows-International-Core" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	#       <SetupUILanguage>
-	#         <UILanguage>en-US</UILanguage>
-	#       </SetupUILanguage>
-	#       <InputLocale>en-US</InputLocale>
-	#       <SystemLocale>en-US</SystemLocale>
-	#       <UILanguage>en-US</UILanguage>
-	#       <UserLocale>en-US</UserLocale>
-	#     </component>
-	#   </settings>
-
-	#   <settings pass="oobeSystem">
-	#     <!-- Specify English (World) locale -->
-	#     <component name="Microsoft-Windows-International-Core" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	#       <InputLocale>en-US</InputLocale>
-	#       <SystemLocale>en-US</SystemLocale>
-	#       <UILanguage>en-US</UILanguage>
-	#       <UserLocale>en-US</UserLocale>
-	#     </component>
-	#   </settings>
-	# using here string to embedd unattend
-	# 	<RunSynchronousCommand wcm:action="add">
-	# 	<Order>1</Order>
-	# 	<Path>net user administrator /active:yes</Path>
-	# </RunSynchronousCommand>
-
-	$unattend = @'
-	<?xml version="1.0" encoding="utf-8"?>
-	<unattend xmlns="urn:schemas-microsoft-com:unattend"
-			xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
-			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-		<settings pass="specialize">
-			<component name="Microsoft-Windows-SQMApi" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-				<CEIPEnabled>0</CEIPEnabled>
-			</component>
-			<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-				<ConfigureChatAutoInstall>false</ConfigureChatAutoInstall>
-			</component>
-		</settings>
-		<settings pass="auditUser">
-			<component name="Microsoft-Windows-Deployment" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-				<RunSynchronous>
-					<RunSynchronousCommand wcm:action="add">
-						<Order>1</Order>
-						<CommandLine>CMD /C echo LAU GG&gt;C:\Windows\LogAuditUser.txt</CommandLine>
-						<Description>StartMenu</Description>
-					</RunSynchronousCommand>
-				</RunSynchronous>
-			</component>
-		</settings>
-		<settings pass="oobeSystem">
-			<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-				<OOBE>
-                	<HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
-	                <SkipUserOOBE>false</SkipUserOOBE>
-                	<SkipMachineOOBE>false</SkipMachineOOBE>
-					<HideOnlineAccountScreens>true</HideOnlineAccountScreens>
-					<HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
-					<HideEULAPage>true</HideEULAPage>
-					<ProtectYourPC>3</ProtectYourPC>
-				</OOBE>
-				<FirstLogonCommands>
-					<SynchronousCommand wcm:action="add">
-						<Order>1</Order>
-						<CommandLine>cmd.exe /c echo 23&gt;c:\windows\csup.txt</CommandLine>
-					</SynchronousCommand>
-					<SynchronousCommand wcm:action="add">
-						<Order>2</Order>
-						<CommandLine>CMD /C echo GG&gt;C:\Windows\LogOobeSystem.txt</CommandLine>
-					</SynchronousCommand>
-					<SynchronousCommand wcm:action="add">
-						<Order>3</Order>
-						<CommandLine>powershell -ExecutionPolicy Bypass -File c:\windows\FirstStartup.ps1</CommandLine>
-					</SynchronousCommand>
-				</FirstLogonCommands>
-			</component>
-		</settings>
-	</unattend>
-'@
-	$unattend | Out-File -FilePath "$env:temp\unattend.xml" -Force
-}
-
-function New-CheckInstall {
-
-	# using here string to embedd firstrun
-	$checkInstall = @'
-	@echo off
-	if exist "C:\windows\cpu.txt" (
-		echo C:\windows\cpu.txt exists
-	) else (
-		echo C:\windows\cpu.txt does not exist
-	)
-	if exist "C:\windows\SerialNumber.txt" (
-		echo C:\windows\SerialNumber.txt exists
-	) else (
-		echo C:\windows\SerialNumber.txt does not exist
-	)
-	if exist "C:\unattend.xml" (
-		echo C:\unattend.xml exists
-	) else (
-		echo C:\unattend.xml does not exist
-	)
-	if exist "C:\Windows\Setup\Scripts\SetupComplete.cmd" (
-		echo C:\Windows\Setup\Scripts\SetupComplete.cmd exists
-	) else (
-		echo C:\Windows\Setup\Scripts\SetupComplete.cmd does not exist
-	)
-	if exist "C:\Windows\Panther\unattend.xml" (
-		echo C:\Windows\Panther\unattend.xml exists
-	) else (
-		echo C:\Windows\Panther\unattend.xml does not exist
-	)
-	if exist "C:\Windows\System32\Sysprep\unattend.xml" (
-		echo C:\Windows\System32\Sysprep\unattend.xml exists
-	) else (
-		echo C:\Windows\System32\Sysprep\unattend.xml does not exist
-	)
-	if exist "C:\Windows\FirstStartup.ps1" (
-		echo C:\Windows\FirstStartup.ps1 exists
-	) else (
-		echo C:\Windows\FirstStartup.ps1 does not exist
-	)
-	if exist "C:\Windows\winutil.ps1" (
-		echo C:\Windows\winutil.ps1 exists
-	) else (
-		echo C:\Windows\winutil.ps1 does not exist
-	)
-	if exist "C:\Windows\LogSpecialize.txt" (
-		echo C:\Windows\LogSpecialize.txt exists
-	) else (
-		echo C:\Windows\LogSpecialize.txt does not exist
-	)
-	if exist "C:\Windows\LogAuditUser.txt" (
-		echo C:\Windows\LogAuditUser.txt exists
-	) else (
-		echo C:\Windows\LogAuditUser.txt does not exist
-	)
-	if exist "C:\Windows\LogOobeSystem.txt" (
-		echo C:\Windows\LogOobeSystem.txt exists
-	) else (
-		echo C:\Windows\LogOobeSystem.txt does not exist
-	)
-	if exist "c:\windows\csup.txt" (
-		echo c:\windows\csup.txt exists
-	) else (
-		echo c:\windows\csup.txt does not exist
-	)
-	if exist "c:\windows\LogFirstRun.txt" (
-		echo c:\windows\LogFirstRun.txt exists
-	) else (
-		echo c:\windows\LogFirstRun.txt does not exist
-	)
-'@
-	$checkInstall | Out-File -FilePath "$env:temp\checkinstall.cmd" -Force -Encoding Ascii
-}
-
-function New-FirstRun {
-
-	# using here string to embedd firstrun
-	$firstRun = @'
-	# Set the global error action preference to continue
-	$ErrorActionPreference = "Continue"
-	function Remove-RegistryValue
-	{
-		param (
-			[Parameter(Mandatory = $true)]
-			[string]$RegistryPath,
-	
-			[Parameter(Mandatory = $true)]
-			[string]$ValueName
-		)
-	
-		# Check if the registry path exists
-		if (Test-Path -Path $RegistryPath)
-		{
-			$registryValue = Get-ItemProperty -Path $RegistryPath -Name $ValueName -ErrorAction SilentlyContinue
-	
-			# Check if the registry value exists
-			if ($registryValue)
-			{
-				# Remove the registry value
-				Remove-ItemProperty -Path $RegistryPath -Name $ValueName -Force
-				Write-Host "Registry value '$ValueName' removed from '$RegistryPath'."
-			}
-			else
-			{
-				Write-Host "Registry value '$ValueName' not found in '$RegistryPath'."
-			}
-		}
-		else
-		{
-			Write-Host "Registry path '$RegistryPath' not found."
-		}
-	}
-	
-	function Stop-UnnecessaryServices
-	{
-		$servicesAuto = @"
-			"AudioSrv",
-			"AudioEndpointBuilder",
-			"BFE",
-			"BITS",
-			"BrokerInfrastructure",
-			"CDPSvc",
-			"CDPUserSvc_dc2a4",
-			"CoreMessagingRegistrar",
-			"CryptSvc",
-			"DPS",
-			"DcomLaunch",
-			"Dhcp",
-			"DispBrokerDesktopSvc",
-			"Dnscache",
-			"DoSvc",
-			"DusmSvc",
-			"EventLog",
-			"EventSystem",
-			"FontCache",
-			"LSM",
-			"LanmanServer",
-			"LanmanWorkstation",
-			"MapsBroker",
-			"MpsSvc",
-			"OneSyncSvc_dc2a4",
-			"Power",
-			"ProfSvc",
-			"RpcEptMapper",
-			"RpcSs",
-			"SCardSvr",
-			"SENS",
-			"SamSs",
-			"Schedule",
-			"SgrmBroker",
-			"ShellHWDetection",
-			"Spooler",
-			"SysMain",
-			"SystemEventsBroker",
-			"TextInputManagementService",
-			"Themes",
-			"TrkWks",
-			"UserManager",
-			"VGAuthService",
-			"VMTools",
-			"WSearch",
-			"Wcmsvc",
-			"WinDefend",
-			"Winmgmt",
-			"WlanSvc",
-			"WpnService",
-			"WpnUserService_dc2a4",
-			"cbdhsvc_dc2a4",
-			"edgeupdate",
-			"gpsvc",
-			"iphlpsvc",
-			"mpssvc",
-			"nsi",
-			"sppsvc",
-			"tiledatamodelsvc",
-			"vm3dservice",
-			"webthreatdefusersvc_dc2a4",
-			"wscsvc"
-"@		
-	
-		$allServices = Get-Service | Where-Object { $_.StartType -eq "Automatic" -and $servicesAuto -NotContains $_.Name}
-		foreach($service in $allServices)
-		{
-			Stop-Service -Name $service.Name -PassThru
-			Set-Service $service.Name -StartupType Manual
-			"Stopping service $($service.Name)" | Out-File -FilePath c:\windows\LogFirstRun.txt -Append -NoClobber
-		}
-	}
-	
-	"FirstStartup has worked" | Out-File -FilePath c:\windows\LogFirstRun.txt -Append -NoClobber
-	
-	$Theme = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
-	Set-ItemProperty -Path $Theme -Name AppsUseLightTheme -Value 1
-	Set-ItemProperty -Path $Theme -Name SystemUsesLightTheme -Value 1
-
-	# figure this out later how to set updates to security only
-	#Import-Module -Name PSWindowsUpdate; 
-	#Stop-Service -Name wuauserv
-	#Set-WUSettings -MicrosoftUpdateEnabled -AutoUpdateOption 'Never'
-	#Start-Service -Name wuauserv
-	
-	Stop-UnnecessaryServices
-	
-	$taskbarPath = "$env:AppData\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
-	# Delete all files on the Taskbar 
-	Get-ChildItem -Path $taskbarPath -File | Remove-Item -Force
-	Remove-RegistryValue -RegistryPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband" -ValueName "FavoritesRemovedChanges"
-	Remove-RegistryValue -RegistryPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband" -ValueName "FavoritesChanges"
-	Remove-RegistryValue -RegistryPath "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Taskband" -ValueName "Favorites"
-	
-	# Stop-Process -Name explorer -Force
-
-	$process = Get-Process -Name "explorer"
-	Stop-Process -InputObject $process
-	# Wait for the process to exit
-	Wait-Process -InputObject $process
-	Start-Sleep -Seconds 3
-
-	# Delete Edge Icon from the desktop
-	$edgeShortcutFiles = Get-ChildItem -Path $desktopPath -Filter "*Edge*.lnk"
-	# Check if Edge shortcuts exist on the desktop
-	if ($edgeShortcutFiles) 
-	{
-		foreach ($shortcutFile in $edgeShortcutFiles) 
-		{
-			# Remove each Edge shortcut
-			Remove-Item -Path $shortcutFile.FullName -Force
-			Write-Host "Edge shortcut '$($shortcutFile.Name)' removed from the desktop."
-		}
-	}
-	Remove-Item -Path "$env:USERPROFILE\Desktop\*.lnk"
-	Remove-Item -Path "C:\Users\Default\Desktop\*.lnk"
-
-	# ************************************************
-	# Create WinUtil shortcut on the desktop
-	#
-	$desktopPath = "$($env:USERPROFILE)\Desktop"
-	# Specify the target PowerShell command
-	$command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'irm https://itbros.gg/win | iex'"
-	# Specify the path for the shortcut
-	$shortcutPath = Join-Path $desktopPath 'winutil.lnk'
-	# Create a shell object
-	$shell = New-Object -ComObject WScript.Shell
-	
-	# Create a shortcut object
-	$shortcut = $shell.CreateShortcut($shortcutPath)
-
-	if (Test-Path -Path "c:\Windows\cttlogo.png")
-	{
-		$shortcut.IconLocation = "c:\Windows\cttlogo.png"
-	}
-	
-	# Set properties of the shortcut
-	$shortcut.TargetPath = "powershell.exe"
-	$shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -Command `"$command`""
-	# Save the shortcut
-	$shortcut.Save()
-	Write-Host "Shortcut created at: $shortcutPath"
-	# 
-	# Done create WinUtil shortcut on the desktop
-	# ************************************************
-
-	Start-Process explorer
-	
-'@
-	$firstRun | Out-File -FilePath "$env:temp\FirstStartup.ps1" -Force 
-}
 function Remove-WinUtilAPPX {
     <#
 
@@ -1800,8 +1237,7 @@ function Invoke-WPFButton {
         "WPFWinUtilShortcut" {Invoke-WPFShortcut -ShortcutToAdd "WinUtil"}
         "WPFGetInstalled" {Invoke-WPFGetInstalled -CheckBox "winget"}
         "WPFGetInstalledTweaks" {Invoke-WPFGetInstalled -CheckBox "tweaks"}
-        "WPFGetIso" {Invoke-WPFGetIso}
-        "WPFMicrowin" {Invoke-WPFMicrowin}
+        "WPFSupIPScanner" {Invoke-WPFIPScanner}
         "WPFSup*" {Invoke-WPFSupportTool -Button $Button}
     }
 }
@@ -2169,131 +1605,6 @@ function Invoke-WPFGetInstalled {
         $sync.ProcessRunning = $false
     }
 }
-function Invoke-WPFGetIso {
-    <#
-    .DESCRIPTION
-    Function to get the path to Iso file for MicroWin, unpack that isom=, read basic information and populate the UI Options
-    #>
-
-    Write-Host "Invoking WPFGetIso"
-
-    if($sync.ProcessRunning){
-        $msg = "GetIso process is currently running."
-        [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
-        return
-    }
-
-    Write-Host "         _                     __    __  _         "
-	Write-Host "  /\/\  (_)  ___  _ __   ___  / / /\ \ \(_) _ __   "
-	Write-Host " /    \ | | / __|| '__| / _ \ \ \/  \/ /| || '_ \  "
-	Write-Host "/ /\/\ \| || (__ | |   | (_) | \  /\  / | || | | | "
-	Write-Host "\/    \/|_| \___||_|    \___/   \/  \/  |_||_| |_| "
-
-    $oscdImgFound = [bool] (Get-Command -ErrorAction Ignore -Type Application oscdimg)
-    Write-Host "oscdimge.exe on system: $oscdImgFound"
-    
-    if (!$oscdImgFound) 
-    {
-        [System.Windows.MessageBox]::Show("oscdimge.exe is not found on the system, you need to download it first before running this function!")
-        
-        # the step below needs choco to download oscdimg
-        $chocoFound = [bool] (Get-Command -ErrorAction Ignore -Type Application choco)
-        Write-Host "choco on system: $oscdImgFound"
-        if (!$chocoFound) 
-        {
-            [System.Windows.MessageBox]::Show("choco.exe is not found on the system, you need choco to download oscdimg.exe")
-            return
-        }
-
-        Start-Process -Verb runas -FilePath powershell.exe -ArgumentList "choco install windows-adk-oscdimg"
-        [System.Windows.MessageBox]::Show("oscdimg is installed, now close, reopen PowerShell terminal and re-launch winutil.ps1 !!!")
-        return
-    }
-
-    [System.Reflection.Assembly]::LoadWithPartialName("System.windows.forms") | Out-Null
-    $openFileDialog = New-Object System.Windows.Forms.OpenFileDialog
-    $openFileDialog.initialDirectory = $initialDirectory
-    $openFileDialog.filter = "ISO files (*.iso)| *.iso"
-    $openFileDialog.ShowDialog() | Out-Null
-    $filePath = $openFileDialog.FileName
-
-    if ([string]::IsNullOrEmpty($filePath))
-    {
-        Write-Host "No ISO is chosen"
-        break
-    }
-
-    Write-Host "File path $($filePath)"
-    if (-not (Test-Path -Path $filePath -PathType Leaf))
-    {
-        $msg = "File you've chosen doesn't exist"
-        [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
-        break
-    }
-
-    Write-Host "Mounting Iso. Please wait."
-    $mountedISO = Mount-DiskImage -PassThru "$filePath"
-    Write-Host "Done mounting Iso $mountedISO"
-    $driveLetter = (Get-Volume -DiskImage $mountedISO).DriveLetter
-    Write-Host "Iso mounted to '$driveLetter'"
-    # storing off values in hidden fields for further steps
-    # there is probably a better way of doing this, I don't have time to figure this out
-    $sync.MicrowinIsoDrive.Text = $driveLetter
-
-    Write-Host "Setting up mount dir and scratch dirs"
-    $mountDir = "c:\microwin"
-    $scratchDir = "c:\microwinscratch"
-    $sync.MicrowinMountDir.Text = $mountDir
-    $sync.MicrowinScratchDir.Text = $scratchDir
-    Write-Host "Done setting up mount dir and scratch dirs"
-
-    try {
-        
-        $data = @($driveLetter, $filePath)
-        New-Item -ItemType Directory -Force -Path "$($mountDir)" | Out-Null
-        New-Item -ItemType Directory -Force -Path "$($scratchDir)" | Out-Null
-        Write-Host "Copying Windows image. This will take awhile, please don't use UI or cancel this step!"
-        
-        # xcopy we can verify files and also not copy files that already exist, but hard to measure
-        # xcopy.exe /E /I /H /R /Y /J $DriveLetter":" $mountDir >$null
-        $totalTime = Measure-Command { Copy-Files "$($driveLetter):" $mountDir -Recurse -Force }
-        Write-Host "Copy complete! Total Time: $($totalTime.Minutes)m$($totalTime.Seconds)s"
-
-        $wimFile = "$mountDir\sources\install.wim"
-        Write-Host "Getting image information $wimFile"
-
-        if (-not (Test-Path -Path $wimFile -PathType Leaf))
-        {
-            $msg = "install wim file doesn't exist in the image, are you sure you used Windows image??"
-            [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Error)
-            throw
-        }
-        Get-WindowsImage -ImagePath $wimFile | ForEach-Object {
-            $imageIdx = $_.ImageIndex
-            $imageName = $_.ImageName
-            $sync.MicrowinWindowsFlavors.Items.Add("$imageIdx : $imageName")
-        }
-        $sync.MicrowinWindowsFlavors.SelectedIndex = 0
-        Get-Volume $driveLetter | Get-DiskImage | Dismount-DiskImage
-        Write-Host "Selected value '$($sync.MicrowinWindowsFlavors.SelectedValue)'....."
-
-        $sync.MicrowinOptionsPanel.Visibility = 'Visible'
-    } catch {
-        Write-Host "Dismounting bad image..."
-        Get-Volume $driveLetter | Get-DiskImage | Dismount-DiskImage
-        Remove-Item -Recurse -Force "$($scratchDir)"
-        Remove-Item -Recurse -Force "$($mountDir)"
-    }
-
-    Write-Host "Done reading and unpacking ISO"
-    Write-Host ""
-    Write-Host "*********************************"
-    Write-Host "Check the UI for further steps!!!"
-
-    $sync.ProcessRunning = $false
-}
-
-
 function Invoke-WPFImpex {
     <#
 
@@ -2418,341 +1729,7 @@ function Invoke-WPFInstallUpgrade {
     Write-Host "-- You can close this window if desired ---"
     Write-Host "==========================================="
 }
-function Invoke-WPFMicrowin {
-    <#
-        .DESCRIPTION
-        Invoke MicroWin routines...
-    #>
 
-	if($sync.ProcessRunning) {
-        $msg = "GetIso process is currently running."
-        [System.Windows.MessageBox]::Show($msg, "Winutil", [System.Windows.MessageBoxButton]::OK, [System.Windows.MessageBoxImage]::Warning)
-        return
-    }
-
-	$index = $sync.MicrowinWindowsFlavors.SelectedValue.Split(":")[0].Trim()
-	Write-Host "Index chosen: '$index' from $($sync.MicrowinWindowsFlavors.SelectedValue)"
-
-	$keepPackages = $sync.WPFMicrowinKeepProvisionedPackages.IsChecked
-	$keepProvisionedPackages = $sync.WPFMicrowinKeepAppxPackages.IsChecked
-	$keepDefender = $sync.WPFMicrowinKeepDefender.IsChecked
-	$keepEdge = $sync.WPFMicrowinKeepEdge.IsChecked
-	$copyToUSB = $sync.WPFMicrowinCopyToUsb.IsChecked
-	$injectDrivers = $sync.MicrowinInjectDrivers.IsChecked
-
-    $mountDir = $sync.MicrowinMountDir.Text
-    $scratchDir = $sync.MicrowinScratchDir.Text
-
-	$mountDirExists = Test-Path $mountDir
-    $scratchDirExists = Test-Path $scratchDir
-	if (-not $mountDirExists -or -not $scratchDirExists) 
-	{
-        Write-Error "Required directories '$mountDirExists' '$scratchDirExists' and do not exist."
-        return
-    }
-
-	try {
-
-		Write-Host "Mounting Windows image. This may take a while."
-		dism /mount-image /imagefile:$mountDir\sources\install.wim /index:$index /mountdir:$scratchDir
-		Write-Host "Mounting complete! Performing removal of applications..."
-
-		if ($injectDrivers)
-		{
-			$driverPath = $sync.MicrowinDriverLocation.Text
-			if (Test-Path $driverPath)
-			{
-				Write-Host "Adding Windows Drivers image($scratchDir) drivers($driverPath) "
-				dism /image:$scratchDir /add-driver /driver:$driverPath /recurse | Out-Host
-			}
-			else 
-			{
-				Write-Host "Path to drivers is invalid continuing without driver injection"
-			}
-		}
-
-		Write-Host "Remove Features from the image"
-		Remove-Features -keepDefender:$keepDefender
-		Write-Host "Removing features complete!"
-
-		Write-Host "Removing Appx Bloat"
-		if (!$keepPackages)
-		{
-			Remove-Packages
-		}
-		if (!$keepProvisionedPackages)
-		{
-			Remove-ProvisionedPackages
-		}
-
-		# special code, for some reason when you try to delete some inbox apps
-		# we have to get and delete log files directory. 
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\System32\LogFiles\WMI\RtBackup" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\System32\WebThreatDefSvc" -Directory
-
-		# Defender is hidden in 2 places we removed a feature above now need to remove it from the disk
-		if (!$keepDefender) 
-		{
-			Write-Host "Removing Defender"
-			Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files\Windows Defender" -Directory
-			Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files (x86)\Windows Defender"
-		}
-		if (!$keepEdge)
-		{
-			Write-Host "Removing Edge"
-			Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files (x86)\Microsoft" -mask "*edge*" -Directory
-			Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files\Microsoft" -mask "*edge*" -Directory
-			Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\SystemApps" -mask "*edge*" -Directory
-		}
-
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\DiagTrack" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\InboxApps" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\System32\SecurityHealthSystray.exe"
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\System32\LocationNotificationWindows.exe" 
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files (x86)\Windows Photo Viewer" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files\Windows Photo Viewer" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files (x86)\Windows Media Player" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files\Windows Media Player" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files (x86)\Windows Mail" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files\Windows Mail" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files (x86)\Internet Explorer" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Program Files\Internet Explorer" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\GameBarPresenceWriter"
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\System32\OneDriveSetup.exe"
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\System32\OneDrive.ico"
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\SystemApps" -mask "*Windows.Search*" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\SystemApps" -mask "*narratorquickstart*" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\SystemApps" -mask "*Xbox*" -Directory
-		Remove-FileOrDirectory -pathToDelete "$($scratchDir)\Windows\SystemApps" -mask "*ParentalControls*" -Directory
-		Write-Host "Removal complete!"
-
-		# *************************** Automation black ***************************
-		# this doesn't work for some reason, this script is not being run at the end of the install
-		# if someone knows how to fix this, feel free to modify
-		New-Item -ItemType Directory -Force -Path $scratchDir\Windows\Setup\Scripts\
-		"wmic cpu get Name > C:\windows\cpu.txt" | Out-File -FilePath "$($scratchDir)\Windows\Setup\Scripts\SetupComplete.cmd" -NoClobber -Append
-		"wmic bios get serialnumber > C:\windows\SerialNumber.txt" | Out-File -FilePath "$($scratchDir)\Windows\Setup\Scripts\SetupComplete.cmd" -NoClobber -Append
-		"devmgmt.msc /s" | Out-File -FilePath "$($scratchDir)\Windows\Setup\Scripts\SetupComplete.cmd" -NoClobber -Append
-
-		Write-Host "Create unattend.xml"
-		New-Unattend
-		Write-Host "Done Create unattend.xml"
-		Write-Host "Copy unattend.xml file into the ISO"
-		New-Item -ItemType Directory -Force -Path "$($scratchDir)\Windows\Panther"
-		Copy-Item "$env:temp\unattend.xml" "$($scratchDir)\Windows\Panther\unattend.xml" -force
-		New-Item -ItemType Directory -Force -Path "$($scratchDir)\Windows\System32\Sysprep"
-		Copy-Item "$env:temp\unattend.xml" "$($scratchDir)\Windows\System32\Sysprep\unattend.xml" -force
-		Copy-Item "$env:temp\unattend.xml" "$($scratchDir)\unattend.xml" -force
-		Write-Host "Done Copy unattend.xml"
-
-		Write-Host "Create FirstRun"
-		New-FirstRun
-		Write-Host "Done create FirstRun"
-		Write-Host "Copy FirstRun.ps1 into the ISO"
-		Copy-Item "$env:temp\FirstStartup.ps1" "$($scratchDir)\Windows\FirstStartup.ps1" -force
-		Write-Host "Done copy FirstRun.ps1"
-
-		Write-Host "Copy link to winutil.ps1 into the ISO"
-		$desktopDir = "$($scratchDir)\Windows\Users\Default\Desktop"
-		New-Item -ItemType Directory -Force -Path "$desktopDir"
-	    dism /image:$($scratchDir) /set-profilepath:"$($scratchDir)\Windows\Users\Default"
-		$command = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'irm https://itbros.gg/win | iex'"
-		$shortcutPath = "$desktopDir\WinUtil.lnk"
-		$shell = New-Object -ComObject WScript.Shell
-		$shortcut = $shell.CreateShortcut($shortcutPath)
-
-		if (Test-Path -Path "$env:TEMP\cttlogo.png")
-		{
-			$pngPath = "$env:TEMP\cttlogo.png"
-			$icoPath = "$env:TEMP\cttlogo.ico"
-			Add-Type -AssemblyName System.Drawing
-			$pngImage = [System.Drawing.Image]::FromFile($pngPath)
-			$pngImage.Save($icoPath, [System.Drawing.Imaging.ImageFormat]::Icon)
-			Write-Host "ICO file created at: $icoPath"
-			Copy-Item "$env:TEMP\cttlogo.png" "$($scratchDir)\Windows\cttlogo.png" -force
-			Copy-Item "$env:TEMP\cttlogo.ico" "$($scratchDir)\cttlogo.ico" -force
-			$shortcut.IconLocation = "c:\cttlogo.ico"
-		}
-
-		$shortcut.TargetPath = "powershell.exe"
-		$shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -Command `"$command`""
-		$shortcut.Save()
-		Write-Host "Shortcut to winutil created at: $shortcutPath"
-		# *************************** Automation black ***************************
-
-		Write-Host "Copy checkinstall.cmd into the ISO"
-		New-CheckInstall
-		Copy-Item "$env:temp\checkinstall.cmd" "$($scratchDir)\Windows\checkinstall.cmd" -force
-		Write-Host "Done copy checkinstall.cmd"
-
-		Write-Host "Creating a directory that allows to bypass Wifi setup"
-		New-Item -ItemType Directory -Force -Path "$($scratchDir)\Windows\System32\OOBE\BYPASSNRO"
-
-		Write-Host "Loading registry"
-		reg load HKLM\zCOMPONENTS "$($scratchDir)\Windows\System32\config\COMPONENTS"
-		reg load HKLM\zDEFAULT "$($scratchDir)\Windows\System32\config\default"
-		reg load HKLM\zNTUSER "$($scratchDir)\Users\Default\ntuser.dat"
-		reg load HKLM\zSOFTWARE "$($scratchDir)\Windows\System32\config\SOFTWARE"
-		reg load HKLM\zSYSTEM "$($scratchDir)\Windows\System32\config\SYSTEM"
-
-		Write-Host "Disabling Teams"
-		reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Communications" /v "ConfigureChatAutoInstall" /t REG_DWORD /d 0 /f   >$null 2>&1
-		reg add "HKLM\zSOFTWARE\Policies\Microsoft\Windows\Windows Chat" /v ChatIcon /t REG_DWORD /d 2 /f                             >$null 2>&1
-		reg add "HKLM\zNTUSER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarMn" /t REG_DWORD /d 0 /f        >$null 2>&1  
-		reg query "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Communications" /v "ConfigureChatAutoInstall"                      >$null 2>&1
-		# Write-Host Error code $LASTEXITCODE
-		Write-Host "Done disabling Teams"
-
-		Write-Host "Bypassing system requirements (system image)"
-		reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zNTUSER\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zNTUSER\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassCPUCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassRAMCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassSecureBootCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassStorageCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassTPMCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\MoSetup" /v "AllowUpgradesWithUnsupportedTPMOrCPU" /t REG_DWORD /d 1 /f
-
-		if (!$keepEdge)
-		{
-			Write-Host "Removing Edge icon from taskbar"
-			reg delete "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Taskband" /v "Favorites" /f 		  >$null 2>&1
-			reg delete "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Taskband" /v "FavoritesChanges" /f   >$null 2>&1
-			reg delete "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Taskband" /v "Pinned" /f             >$null 2>&1
-			reg delete "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Taskband" /v "LayoutCycle" /f        >$null 2>&1
-			Write-Host "Edge icon removed from taskbar"
-		}
-
-		reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Search" /v "SearchboxTaskbarMode" /t REG_DWORD /d 0 /f
-		Write-Host "Setting all services to start manually"
-		reg add "HKLM\zSOFTWARE\CurrentControlSet\Services" /v Start /t REG_DWORD /d 3 /f
-		# Write-Host $LASTEXITCODE
-
-		Write-Host "Enabling Local Accounts on OOBE"
-		reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\OOBE" /v "BypassNRO" /t REG_DWORD /d "1" /f
-
-		Write-Host "Disabling Sponsored Apps"
-		reg add "HKLM\zNTUSER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "OemPreInstalledAppsEnabled" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zNTUSER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "PreInstalledAppsEnabled" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zNTUSER\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v "SilentInstalledAppsEnabled" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zSOFTWARE\Policies\Microsoft\Windows\CloudContent" /v "DisableWindowsConsumerFeatures" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSOFTWARE\Microsoft\PolicyManager\current\device\Start" /v "ConfigureStartPins" /t REG_SZ /d '{\"pinnedList\": [{}]}' /f
-		Write-Host "Done removing Sponsored Apps"
-		
-		Write-Host "Disabling Reserved Storage"
-		reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\ReserveManager" /v "ShippedWithReserves" /t REG_DWORD /d 0 /f
-
-		Write-Host "Changing theme to dark. This only works on Activated Windows"
-		reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "AppsUseLightTheme" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zSOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize" /v "SystemUsesLightTheme" /t REG_DWORD /d 0 /f
-
-	} catch {
-        Write-Error "An unexpected error occurred: $_"
-    } finally {
-		Write-Host "Unmounting Registry..."
-		reg unload HKLM\zCOMPONENTS
-		reg unload HKLM\zDEFAULT
-		reg unload HKLM\zNTUSER
-		reg unload HKLM\zSOFTWARE
-		reg unload HKLM\zSYSTEM
-
-		Write-Host "Cleaning up image..."
-		dism /image:$scratchDir /Cleanup-Image /StartComponentCleanup /ResetBase
-		Write-Host "Cleanup complete."
-
-		Write-Host "Unmounting image..."
-		dism /unmount-image /mountdir:$scratchDir /commit
-	} 
-	
-	try {
-
-		Write-Host "Exporting image into $mountDir\sources\install2.wim"
-		dism /Export-Image /SourceImageFile:"$mountDir\sources\install.wim" /SourceIndex:$index /DestinationImageFile:"$mountDir\sources\install2.wim" /compress:max
-		Write-Host "Remove old '$mountDir\sources\install.wim' and rename $mountDir\sources\install2.wim"
-		Remove-Item "$mountDir\sources\install.wim"
-		Rename-Item "$mountDir\sources\install2.wim" "$mountDir\sources\install.wim"
-
-		if (-not (Test-Path -Path "$mountDir\sources\install.wim"))
-		{
-			Write-Error "Somethig went wrong and '$mountDir\sources\install.wim' doesn't exist. Please report this bug to the devs"
-			return
-		}
-		Write-Host "Windows image completed. Continuing with boot.wim."
-
-		# Next step boot image		
-		Write-Host "Mounting boot image $mountDir\sources\boot.wim into $scratchDir"
-		dism /mount-image /imagefile:"$mountDir\sources\boot.wim" /index:2 /mountdir:"$scratchDir"
-	
-		Write-Host "Loading registry..."
-		reg load HKLM\zCOMPONENTS "$($scratchDir)\Windows\System32\config\COMPONENTS" >$null
-		reg load HKLM\zDEFAULT "$($scratchDir)\Windows\System32\config\default" >$null
-		reg load HKLM\zNTUSER "$($scratchDir)\Users\Default\ntuser.dat" >$null
-		reg load HKLM\zSOFTWARE "$($scratchDir)\Windows\System32\config\SOFTWARE" >$null
-		reg load HKLM\zSYSTEM "$($scratchDir)\Windows\System32\config\SYSTEM" >$null
-		Write-Host "Bypassing system requirements on the setup image"
-		reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zDEFAULT\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zNTUSER\Control Panel\UnsupportedHardwareNotificationCache" /v "SV1" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zNTUSER\Control Panel\UnsupportedHardwareNotificationCache" /v "SV2" /t REG_DWORD /d 0 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassCPUCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassRAMCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassSecureBootCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassStorageCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\LabConfig" /v "BypassTPMCheck" /t REG_DWORD /d 1 /f
-		reg add "HKLM\zSYSTEM\Setup\MoSetup" /v "AllowUpgradesWithUnsupportedTPMOrCPU" /t REG_DWORD /d 1 /f
-		# Fix Computer Restarted Unexpectedly Error on New Bare Metal Install
-		reg add "HKLM\zSYSTEM\Setup\Status\ChildCompletion" /v "setup.exe" /t REG_DWORD /d 3 /f
-	} catch {
-        Write-Error "An unexpected error occurred: $_"
-    } finally {
-		Write-Host "Unmounting Registry..."
-		reg unload HKLM\zCOMPONENTS
-		reg unload HKLM\zDEFAULT
-		reg unload HKLM\zNTUSER
-		reg unload HKLM\zSOFTWARE
-		reg unload HKLM\zSYSTEM
-
-		Write-Host "Unmounting image..."
-		dism /unmount-image /mountdir:$scratchDir /commit 
-
-		Write-Host "Creating ISO image"
-		#& oscdimg.exe -m -o -u2 -udfver102 -bootdata:2#p0,e,b$mountDir\boot\etfsboot.com#pEF,e,b$mountDir\efi\microsoft\boot\efisys.bin $mountDir $env:temp\microwin.iso
-		Start-Process -FilePath "oscdimg.exe" -ArgumentList "-m -o -u2 -udfver102 -bootdata:2#p0,e,b$mountDir\boot\etfsboot.com#pEF,e,b$mountDir\efi\microsoft\boot\efisys.bin $mountDir $env:temp\microwin.iso" -NoNewWindow -Wait
-
-		if ($copyToUSB)
-		{
-			Write-Host "Copying microwin.iso to the USB drive"
-			Copy-ToUSB("$env:temp\microwin.iso")
-			Write-Host "Done Copying microwin.iso to USB drive!"
-		}
-		
-		Write-Host " _____                       "
-		Write-Host "(____ \                      "
-		Write-Host " _   \ \ ___  ____   ____    "
-		Write-Host "| |   | / _ \|  _ \ / _  )   "
-		Write-Host "| |__/ / |_| | | | ( (/ /    "
-		Write-Host "|_____/ \___/|_| |_|\____)   "
-
-		# Check if the ISO was successfully created - CTT edit
-		if ($LASTEXITCODE -eq 0) {
-			Write-Host "Done. ISO image is located here: $env:temp\microwin.iso"
-			Write-Host "Performing Cleanup"
-				Remove-Item -Recurse -Force "$($scratchDir)"
-				Remove-Item -Recurse -Force "$($mountDir)"
-		} else {
-			Write-Host "ISO creation failed. The "$($mountDir)" directory has not been removed."
-		}
-		
-
-		$sync.MicrowinOptionsPanel.Visibility = 'Collapsed'
-		
-		$sync.MicrowinFinalIsoLocation.Text = "$env:temp\microwin.iso"
-
-		$sync.ProcessRunning = $false
-	}
-}
 function Invoke-WPFPanelAutologin {
     <#
 
@@ -2927,39 +1904,31 @@ function Invoke-WPFShortcut {
     Write-Host "Shortcut for $ShortcutToAdd has been saved to $($FileBrowser.FileName)"
 }
 function Invoke-WPFTab {
-
     <#
-
     .SYNOPSIS
-        Sets the selected tab to the tab that was clicked
-
-    .PARAMETER ClickedTab
-        The name of the tab that was clicked
-
+        Selects a tab by its actual control instead of its numbered name.
     #>
+    param([Parameter(Mandatory=$true)][string]$ClickedTab)
 
-    Param ($ClickedTab)
+    $tabName = $ClickedTab -replace 'BT$', ''
+    if (-not $sync.ContainsKey($ClickedTab) -or -not $sync.ContainsKey($tabName)) { return }
 
-    $tabNav = Get-WinUtilVariables | Where-Object {$psitem -like "WPFTabNav"}
-    $tabNumber = [int]($ClickedTab -replace "WPFTab","" -replace "BT","") - 1
+    $tabControl = $sync['WPFTabNav']
+    $tabItem = $sync[$tabName]
+    if ($null -eq $tabControl -or $null -eq $tabItem) { return }
 
-    $filter = Get-WinUtilVariables -Type ToggleButton | Where-Object {$psitem -like "WPFTab?BT"}
-    $sync.GetEnumerator() | Where-Object {$psitem.Key -in $filter} | ForEach-Object {
-        if ($ClickedTab -ne $PSItem.name) {
-            $sync[$PSItem.Name].IsChecked = $false
-            # $tabNumber = [int]($PSItem.Name -replace "WPFTab","" -replace "BT","") - 1
-            # $sync.$tabNav.Items[$tabNumber].IsSelected = $false
-        }
-        else {
-            $sync["$ClickedTab"].IsChecked = $true
-            $tabNumber = [int]($ClickedTab-replace "WPFTab","" -replace "BT","") - 1
-            $sync.$tabNav.Items[$tabNumber].IsSelected = $true
-        }
+    $tabIndex = $tabControl.Items.IndexOf($tabItem)
+    if ($tabIndex -lt 0) { return }
+
+    $buttons = Get-WinUtilVariables -Type ToggleButton |
+        Where-Object { $_ -like 'WPFTab?BT' }
+    foreach ($name in $buttons) {
+        $sync[$name].IsChecked = ($name -eq $ClickedTab)
     }
+    $tabControl.SelectedIndex = $tabIndex
 
-    # The top search box is specifically for application selection on Install.
-    if ($sync.ContainsKey("CheckboxFilter")) {
-        $sync.CheckboxFilter.Visibility = if ($ClickedTab -eq "WPFTab1BT") { "Visible" } else { "Collapsed" }
+    if ($sync.ContainsKey('CheckboxFilter')) {
+        $sync.CheckboxFilter.Visibility = if ($ClickedTab -eq 'WPFTab1BT') { 'Visible' } else { 'Collapsed' }
     }
 }
 
@@ -3500,6 +2469,729 @@ function Invoke-WPFUpdatessecurity {
         Write-Host "-- Updates Set to Recommended ---"
         Write-Host "================================="
 }
+function Convert-WPFScannerIPv4 {
+    param([Parameter(Mandatory=$true)][string]$Address)
+
+    if ($Address -notmatch '^\d{1,3}(\.\d{1,3}){3}$') {
+        throw "Enter a valid IPv4 address: $Address"
+    }
+    [uint64]$value = 0
+    foreach ($part in $Address.Split('.')) {
+        $octet = [int]$part
+        if ($octet -gt 255) { throw "Invalid IPv4 octet in $Address" }
+        $value = ($value * 256) + $octet
+    }
+    return $value
+}
+
+function Get-WPFScannerTargets {
+    param([Parameter(Mandatory=$true)][string]$Target)
+
+    $inputText = $Target.Trim()
+    [uint64]$start = 0
+    [uint64]$end = 0
+
+    if ($inputText -match '^([^/]+)/(\d{1,2})$') {
+        $address = Convert-WPFScannerIPv4 $Matches[1]
+        $prefix = [int]$Matches[2]
+        if ($prefix -lt 0 -or $prefix -gt 32) { throw "CIDR prefix must be between 0 and 32." }
+
+        [uint64]$blockSize = [uint64][math]::Pow(2, (32 - $prefix))
+        $start = [uint64]([math]::Floor($address / $blockSize) * $blockSize)
+        $end = $start + $blockSize - 1
+
+        # Exclude network and broadcast in ordinary subnets; keep both addresses in /31 and /32.
+        if ($prefix -le 30) { $start++; $end-- }
+    }
+    elseif ($inputText -match '^([0-9.]+)\s*-\s*([0-9.]+)$') {
+        $start = Convert-WPFScannerIPv4 $Matches[1]
+        $end = Convert-WPFScannerIPv4 $Matches[2]
+    }
+    else {
+        $start = Convert-WPFScannerIPv4 $inputText
+        $end = $start
+    }
+
+    if ($end -lt $start) { throw "The end IP must be greater than or equal to the start IP." }
+    $count = $end - $start + 1
+    if ($count -gt 1024) { throw "For safety, scan 1,024 addresses or fewer at a time." }
+
+    for ([uint64]$n = $start; $n -le $end; $n++) {
+        $a = [int][math]::Floor($n / 16777216)
+        $b = [int][math]::Floor(($n % 16777216) / 65536)
+        $c = [int][math]::Floor(($n % 65536) / 256)
+        $d = [int]($n % 256)
+        "$a.$b.$c.$d"
+    }
+}
+
+function Convert-WPFScannerResult {
+    <#
+    .SYNOPSIS
+        Normalizes one worker result for the table and safe, clickable web links.
+    #>
+    param([Parameter(Mandatory=$true)]$Row)
+
+    # Never display provider metadata or file paths as an IP address.
+    $ipMatch = [regex]::Match([string]$Row.IP, '(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)')
+    if (-not $ipMatch.Success) { return $null }
+    $ip = $ipMatch.Value
+    $parsed = $null
+    if (-not [System.Net.IPAddress]::TryParse($ip, [ref]$parsed)) { return $null }
+    if ($parsed.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { return $null }
+
+    $webLinks = New-Object 'System.Collections.Generic.List[object]'
+    $portString = [string]$Row.Ports
+    foreach ($port in @(80, 443, 631, 8080, 8443)) {
+        if ($portString -match "(^|,\s*)$port(\s*,|$)") {
+            $scheme = if ($port -in @(443,8443)) { 'https' } else { 'http' }
+            $uri = "$scheme" + "://$ip" + ":$port/"
+            $webLinks.Add([pscustomobject]@{
+                Label = [string]$port
+                Url = [System.Uri]::new($uri)
+            })
+        }
+    }
+
+    $name = [string]$Row.Hostname
+    if ([string]::IsNullOrWhiteSpace($name)) { $name = '-' }
+    $type = [string]$Row.DeviceType
+    if ([string]::IsNullOrWhiteSpace($type)) { $type = 'Device' }
+
+    [pscustomobject]@{
+        IP = [string]$ip
+        Hostname = $name
+        DeviceType = $type
+        Latency = [string]$Row.Latency
+        MAC = [string]$Row.MAC
+        Ports = if ($portString) { $portString } else { '-' }
+        WebLinks = @($webLinks.ToArray())
+    }
+}
+
+function Invoke-WPFIPScanner {
+    <#
+    .SYNOPSIS
+        Opens a separate ITBros IP Scanner window.
+    .DESCRIPTION
+        Only scans an explicitly entered IPv4 target. Supports a single IP, a
+        full IP start-end range, or a CIDR subnet (up to 1,024 addresses).
+        A child PowerShell process performs network probes so the WPF UI
+        remains responsive. Stopping or closing the window ends that process.
+        No external scanning tools or dependencies are downloaded.
+    #>
+
+    Add-Type -AssemblyName PresentationFramework
+    Add-Type -AssemblyName PresentationCore
+    Add-Type -AssemblyName WindowsBase
+    Add-Type -AssemblyName System.Windows.Forms
+
+    $scannerXaml = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ITBros | IP Scanner TEST v0.3.1" Width="1160" Height="700"
+        MinWidth="810" MinHeight="490" WindowStartupLocation="CenterOwner"
+        Background="#101923" FontFamily="Segoe UI" FontSize="13">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="#F2F6FA"/>
+            <Setter Property="Background" Value="#293E54"/>
+            <Setter Property="BorderBrush" Value="#405870"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="15,9"/>
+            <Setter Property="Margin" Value="5,0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="BasicButtonSurface" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BasicButtonSurface" Property="Background" Value="#3F5971"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E7EDF5"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="2,0,2,18">
+            <StackPanel>
+                <TextBlock Text="ITBros IP Scanner" FontSize="25" FontWeight="SemiBold"/>
+                <TextBlock Text="Device discovery for networks you are authorized to scan"
+                           Foreground="#9EAFBE" Margin="0,5,0,0"/>
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Right" Text="TEST v0.3.1" Foreground="#FA9CA5"
+                       HorizontalAlignment="Right" FontWeight="Bold" FontSize="11"
+                       Margin="0,9,0,0"/>
+        </DockPanel>
+        <Border Grid.Row="1" Background="#1B2A3B" BorderBrush="#35495D"
+                BorderThickness="1" CornerRadius="12" Padding="18,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="IP RANGE OR CIDR" Foreground="#BCCAD8" FontSize="11"
+                               FontWeight="Bold" Margin="0,0,0,8"/>
+                    <TextBox Name="ScanTarget" Background="#111F2E" BorderBrush="#567087"
+                             Foreground="White" Padding="10,9" FontSize="14"
+                             Text="" ToolTip="Example: 192.168.1.0/24 or 192.168.1.10-192.168.1.50"/>
+                    <TextBlock Text="Examples: 192.168.1.0/24  |  10.0.0.10-10.0.0.50  |  192.168.1.1"
+                               Foreground="#A6B8CA" FontSize="11" Margin="0,8,0,0"/>
+                    <CheckBox Name="ScanPorts" Content="Check TCP ports on ping-responsive devices (80, 443, 445, 3389)"
+                              Foreground="#D5E0EB" Margin="0,12,0,0" IsChecked="False"/>
+                    <CheckBox Name="ScanNetBIOS" Content="Try Windows/NetBIOS device names (slower)"
+                              Foreground="#BBD0E1" Margin="0,8,0,0" IsChecked="False"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="SHOW:" Foreground="#BECEDF" FontSize="11" FontWeight="Bold"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <ComboBox Name="ScanFilter" SelectedIndex="0" Height="33" Width="200"
+                                  Background="#E6EDF6" Foreground="#17273A" FontSize="12"
+                                  ToolTip="Printer filter looks for TCP 9100, 631, 515 or printer names. All devices must respond to ping.">
+                            <ComboBoxItem Content="All responding devices"/>
+                            <ComboBoxItem Content="Likely printers only"/>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
+                            Margin="14,8,0,0">
+                    <Button Name="ScanStart" Content="Start scan" Background="#AA3542"/>
+                    <Button Name="ScanStop" Content="Stop" IsEnabled="False"/>
+                    <Button Name="ScanExport" Content="Export CSV" IsEnabled="False"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <StackPanel Grid.Row="2" Margin="3,16,3,12">
+            <TextBlock Name="ScanStatus" Text="Ready. Enter a target above, then start the scan."
+                       Foreground="#CAD6E2" Margin="0,0,0,9"/>
+            <ProgressBar Name="ScanProgress" Height="7" Minimum="0" Maximum="100"
+                         Value="0" Background="#243448" Foreground="#C84B5B"/>
+        </StackPanel>
+        <Border Grid.Row="3" Background="#192838" BorderBrush="#35495D"
+                BorderThickness="1" CornerRadius="11" Padding="2">
+            <DataGrid Name="ScanResults" AutoGenerateColumns="False" CanUserAddRows="False"
+                      IsReadOnly="True" HeadersVisibility="Column" AlternatingRowBackground="#21364B"
+                      Background="#192838" Foreground="#EEF3F8" RowBackground="#192838"
+                      BorderThickness="0" GridLinesVisibility="None"
+                      ColumnHeaderHeight="38" RowHeight="33" SelectionMode="Extended">
+                <DataGrid.Resources>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Setter Property="Foreground" Value="#EAF1F9"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="{x:Type DataGridColumnHeader}">
+                        <Setter Property="Background" Value="#263B51"/>
+                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="Padding" Value="12,0"/>
+                        <Setter Property="BorderBrush" Value="#435970"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="IP address" Binding="{Binding IP}" Width="145"/>
+                    <DataGridTextColumn Header="Device name" Binding="{Binding Hostname}" Width="*"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding DeviceType}" Width="118"/>
+                    <DataGridTextColumn Header="Ping (ms)" Binding="{Binding Latency}" Width="88"/>
+                    <DataGridTextColumn Header="MAC (local LAN)" Binding="{Binding MAC}" Width="145"/>
+                    <DataGridTextColumn Header="Open TCP ports" Binding="{Binding Ports}" Width="130"/>
+                    <DataGridTemplateColumn Header="Web UI" Width="118">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ItemsControl ItemsSource="{Binding WebLinks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,0,9,0">
+                                                <Hyperlink NavigateUri="{Binding Url}" Foreground="#72C9FF"
+                                                           ToolTip="Open this HTTP(S) address in your browser">
+                                                    <Run Text="{Binding Label}"/>
+                                                </Hyperlink>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+        <TextBlock Grid.Row="4"
+                   Text="Only successful ping replies are listed. Printer detection is best-effort; web links appear for HTTP, HTTPS and IPP services."
+                   Foreground="#A7B8C8" FontSize="11" Margin="5,14,0,0" TextWrapping="Wrap"/>
+    </Grid>
+</Window>
+'@
+
+    # Use XmlReader instead of converting the entire XAML to [xml].
+    # Show the underlying XML/WPF error rather than echoing the complete markup.
+    $xmlReader = $null
+    $stringReader = $null
+    try {
+        $stringReader = [System.IO.StringReader]::new($scannerXaml)
+        $xmlReader = [System.Xml.XmlReader]::Create($stringReader)
+        $window = [System.Windows.Markup.XamlReader]::Load($xmlReader)
+    }
+    catch {
+        $errorDetail = $_.Exception.GetBaseException()
+        $summary = $errorDetail.Message
+        if ($errorDetail -is [System.Xml.XmlException]) {
+            $summary = "XML line $($errorDetail.LineNumber), position $($errorDetail.LinePosition): $summary"
+        }
+        [void][System.Windows.MessageBox]::Show(
+            ("IP Scanner TEST v0.3.1 could not open." + [Environment]::NewLine + [Environment]::NewLine + $summary),
+            'ITBros IP Scanner', 'OK', 'Error'
+        )
+        return
+    }
+    finally {
+        if ($xmlReader) { $xmlReader.Dispose() }
+        if ($stringReader) { $stringReader.Dispose() }
+    }
+
+    if ($sync -and $sync.Form) { $window.Owner = $sync.Form }
+
+    $state = @{
+        Window = $window
+        Target = $window.FindName('ScanTarget')
+        Ports = $window.FindName('ScanPorts')
+        Filter = $window.FindName('ScanFilter')
+        NetBIOS = $window.FindName('ScanNetBIOS')
+        Start = $window.FindName('ScanStart')
+        Stop = $window.FindName('ScanStop')
+        Export = $window.FindName('ScanExport')
+        Status = $window.FindName('ScanStatus')
+        Progress = $window.FindName('ScanProgress')
+        Results = $window.FindName('ScanResults')
+        Items = [System.Collections.ObjectModel.ObservableCollection[object]]::new()
+        Process = $null
+        Folder = $null
+        ResultPath = $null
+        ProgressPath = $null
+        ErrorPath = $null
+        Timer = $null
+        NextLine = 0
+        Total = 0
+        WasStopped = $false
+    }
+    $state.Results.ItemsSource = $state.Items
+
+    # Open discovered HTTP(S) services on a user click, using the Windows default browser.
+    # Do not name the second parameter $args: PowerShell reserves that variable as an array.
+    $navigate = [System.Windows.Navigation.RequestNavigateEventHandler] {
+        param($sender, [System.Windows.Navigation.RequestNavigateEventArgs]$eventArgs)
+        $eventArgs.Handled = $true
+        $uri = $eventArgs.Uri
+        if (-not $uri -or -not $uri.IsAbsoluteUri) { return }
+        if ($uri.Scheme -notin @('http', 'https')) { return }
+
+        $address = $null
+        if (-not [System.Net.IPAddress]::TryParse($uri.Host, [ref]$address)) { return }
+        if ($address.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { return }
+        if ($uri.Port -notin @(80, 443, 631, 8080, 8443)) { return }
+
+        try {
+            $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $startInfo.FileName = $uri.AbsoluteUri
+            $startInfo.UseShellExecute = $true
+            $browserProcess = [System.Diagnostics.Process]::Start($startInfo)
+            if ($browserProcess) { $browserProcess.Dispose() }
+        }
+        catch {
+            [void][System.Windows.MessageBox]::Show(
+                "Unable to open the web page: $($_.Exception.Message)",
+                'ITBros IP Scanner', 'OK', 'Warning'
+            )
+        }
+    }
+    $state.Results.AddHandler([System.Windows.Documents.Hyperlink]::RequestNavigateEvent, $navigate)
+
+
+
+    $worker = @'
+param(
+    [Parameter(Mandatory=$true)][string]$TargetFile,
+    [Parameter(Mandatory=$true)][string]$ResultFile,
+    [Parameter(Mandatory=$true)][string]$ProgressFile,
+    [Parameter(Mandatory=$true)][string]$ErrorFile,
+    [switch]$ProbePorts,
+    [switch]$PrintersOnly,
+    [switch]$ResolveNetBIOS
+)
+$ErrorActionPreference = 'Stop'
+
+function Get-ScannerNetBIOSName {
+    param([string]$IP)
+    $exe = Join-Path $env:SystemRoot 'System32\nbtstat.exe'
+    if (-not (Test-Path -LiteralPath $exe)) { return $null }
+
+    $info = New-Object System.Diagnostics.ProcessStartInfo
+    $info.FileName = $exe
+    $info.Arguments = "-A $IP"
+    $info.CreateNoWindow = $true
+    $info.UseShellExecute = $false
+    $info.RedirectStandardOutput = $true
+    $proc = $null
+    try {
+        $proc = [System.Diagnostics.Process]::Start($info)
+        if (-not $proc.WaitForExit(850)) {
+            try { $proc.Kill() } catch {}
+            return $null
+        }
+        $result = $proc.StandardOutput.ReadToEnd()
+        $hit = [regex]::Match($result, '(?im)^\s*([^\s<>]{1,63})\s+<00>\s+UNIQUE\s+Registered')
+        if ($hit.Success) { return $hit.Groups[1].Value }
+    }
+    catch {}
+    finally { if ($proc) { $proc.Dispose() } }
+    return $null
+}
+
+try {
+    # Use .NET file I/O to avoid Get-Content's extended PSPath/Value metadata.
+    $addresses = @([System.IO.File]::ReadAllLines($TargetFile))
+    $count = $addresses.Count
+    [System.IO.File]::WriteAllText($ResultFile, '')
+    $utf8 = [System.Text.UTF8Encoding]::new($false)
+    $dnsHint = '(?i)(printer|print|laserjet|officejet|deskjet|brother|xerox|ricoh|kyocera|lexmark|epson|canon|konica|zebra|sharp|bizhub)'
+
+    for ($offset = 0; $offset -lt $count; $offset += 32) {
+        $last = [math]::Min($offset + 31, $count - 1)
+        $batch = @($addresses[$offset..$last])
+        $pings = @()
+        foreach ($raw in $batch) {
+            # Restrict probes to valid IPv4 addresses, even if a stale target list contains metadata.
+            $match = [regex]::Match([string]$raw, '(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)')
+            if (-not $match.Success) { continue }
+            $ip = $match.Value
+            $ipObject = $null
+            if (-not [System.Net.IPAddress]::TryParse($ip, [ref]$ipObject)) { continue }
+            if ($ipObject.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { continue }
+
+            $client = New-Object System.Net.NetworkInformation.Ping
+            try {
+                $task = $client.SendPingAsync($ip, 650)
+                $pings += [pscustomobject]@{
+                    IP=[string]$ip; Client=$client; Task=$task;
+                    Alive=$false; Latency='-'; Ports=@()
+                }
+            }
+            catch { $client.Dispose() }
+        }
+
+        $pingTasks = @($pings | ForEach-Object { $_.Task })
+        if ($pingTasks.Count) {
+            try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]$pingTasks, 950) }
+            catch {}
+        }
+        foreach ($item in $pings) {
+            try {
+                if ($item.Task.IsCompleted -and -not $item.Task.IsFaulted -and
+                    -not $item.Task.IsCanceled -and
+                    $item.Task.Result.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
+                    $item.Alive = $true
+                    $item.Latency = [string]$item.Task.Result.RoundtripTime
+                }
+            } catch {}
+            finally { $item.Client.Dispose() }
+        }
+
+        # Nothing other than a successful ICMP reply can mark a device as responsive.
+        $alive = @($pings | Where-Object { $_.Alive })
+        if ($alive.Count -gt 0 -and ($ProbePorts -or $PrintersOnly)) {
+            $portsToCheck = if ($PrintersOnly) { @(80,443,515,631,9100) } else { @(80,443,445,3389) }
+            $checks = @()
+            foreach ($item in $alive) {
+                foreach ($port in $portsToCheck) {
+                    $tcp = New-Object System.Net.Sockets.TcpClient
+                    try {
+                        $task = $tcp.ConnectAsync($item.IP, $port)
+                        $checks += [pscustomobject]@{ Entry=$item; Port=$port; Client=$tcp; Task=$task }
+                    }
+                    catch { $tcp.Dispose() }
+                }
+            }
+            if ($checks.Count) {
+                try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]@($checks | ForEach-Object { $_.Task }), 750) }
+                catch {}
+            }
+            foreach ($check in $checks) {
+                try {
+                    if ($check.Task.IsCompleted -and -not $check.Task.IsFaulted -and
+                        -not $check.Task.IsCanceled -and $check.Client.Connected) {
+                        $check.Entry.Ports += [int]$check.Port
+                    }
+                }
+                catch {}
+                finally { $check.Client.Dispose() }
+            }
+        }
+
+        $dnsQueries = @()
+        foreach ($item in $alive) {
+            try {
+                $task = [System.Net.Dns]::GetHostEntryAsync([System.Net.IPAddress]::Parse($item.IP))
+                $dnsQueries += [pscustomobject]@{ IP=$item.IP; Task=$task }
+            }
+            catch {}
+        }
+        if ($dnsQueries.Count) {
+            try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]@($dnsQueries | ForEach-Object { $_.Task }), 1800) }
+            catch {}
+        }
+        $names = @{}
+        foreach ($query in $dnsQueries) {
+            try {
+                if ($query.Task.IsCompleted -and -not $query.Task.IsFaulted -and -not $query.Task.IsCanceled) {
+                    $hostname = [string]$query.Task.Result.HostName
+                    if ($hostname -and $hostname -ne $query.IP) { $names[$query.IP] = $hostname }
+                }
+            } catch {}
+        }
+
+        $neighbors = @{}
+        try {
+            Get-NetNeighbor -AddressFamily IPv4 -ErrorAction Stop | ForEach-Object {
+                $mac = [string]$_.LinkLayerAddress
+                if ($mac -and $mac -ne '00-00-00-00-00-00') {
+                    $neighbors[[string]$_.IPAddress] = $mac
+                }
+            }
+        } catch {}
+
+        foreach ($item in $alive) {
+            $hostname = if ($names.ContainsKey($item.IP)) { $names[$item.IP] } else { '-' }
+            if ($hostname -eq '-' -and $ResolveNetBIOS) {
+                $netbios = Get-ScannerNetBIOSName -IP $item.IP
+                if ($netbios) { $hostname = [string]$netbios }
+            }
+            $mac = if ($neighbors.ContainsKey($item.IP)) { $neighbors[$item.IP] } else { '-' }
+            $distinctPorts = @($item.Ports | Sort-Object -Unique)
+            $looksLikePrinter = (($distinctPorts | Where-Object { $_ -in @(515,631,9100) }).Count -gt 0) -or
+                                ($hostname -match $dnsHint)
+            if ($PrintersOnly -and -not $looksLikePrinter) { continue }
+
+            $record = [pscustomobject]@{
+                IP = [string]$item.IP
+                Hostname = [string]$hostname
+                DeviceType = if ($looksLikePrinter) { 'Likely printer' } else { 'Device' }
+                Latency = [string]$item.Latency
+                MAC = [string]$mac
+                Ports = if ($distinctPorts.Count) { $distinctPorts -join ', ' } else { '-' }
+            }
+            $line = ($record | ConvertTo-Json -Compress -Depth 3) + [Environment]::NewLine
+            [System.IO.File]::AppendAllText($ResultFile, $line, $utf8)
+        }
+
+        [System.IO.File]::WriteAllText($ProgressFile, [string]($last + 1))
+    }
+}
+catch {
+    try { [System.IO.File]::WriteAllText($ErrorFile, $_.Exception.Message) } catch {}
+    exit 1
+}
+'@
+
+    # Read plain lines, without PowerShell filesystem provider-added metadata.
+    $updateRows = {
+        if ([string]::IsNullOrWhiteSpace($state.ResultPath) -or
+            -not [System.IO.File]::Exists($state.ResultPath)) { return }
+        try {
+            $lines = [System.IO.File]::ReadAllLines($state.ResultPath)
+            while ($state.NextLine -lt $lines.Length) {
+                $line = [string]$lines[$state.NextLine]
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    try {
+                        $parsed = $line | ConvertFrom-Json -ErrorAction Stop
+                        $device = Convert-WPFScannerResult -Row $parsed
+                        if ($null -ne $device) { $state.Items.Add($device) }
+                    }
+                    catch { break } # Incomplete JSON line; read it on next tick.
+                }
+                $state.NextLine++
+            }
+            $state.Export.IsEnabled = ($state.Items.Count -gt 0)
+        }
+        catch {} # Transient file sharing during a write is normal.
+    }.GetNewClosure()
+
+    $state.Timer = New-Object System.Windows.Threading.DispatcherTimer
+    $state.Timer.Interval = [TimeSpan]::FromMilliseconds(350)
+    $state.Timer.Add_Tick({
+        if (-not $state.Process) { return }
+
+        [void]$updateRows.Invoke()
+        $done = 0
+        if ($state.ProgressPath -and [System.IO.File]::Exists($state.ProgressPath)) {
+            try {
+                $value = [System.IO.File]::ReadAllText($state.ProgressPath).Trim()
+                if ($value -match '^\d+$') { $done = [int]$value }
+            } catch {}
+        }
+
+        if ($state.Total -gt 0) {
+            $state.Progress.Value = [math]::Min(100, (100 * $done / $state.Total))
+        }
+        $state.Status.Text = "Scanned $done / $($state.Total) addresses | $($state.Items.Count) ping-responsive matches"
+
+        if (-not $state.Process.HasExited) { return }
+
+        $state.Timer.Stop()
+        [void]$updateRows.Invoke()
+        $state.Start.IsEnabled = $true
+        $state.Stop.IsEnabled = $false
+        $state.Export.IsEnabled = ($state.Items.Count -gt 0)
+
+        if ($state.WasStopped) {
+            $state.Status.Text = "Scan stopped | $($state.Items.Count) devices"
+        }
+        elseif ($state.Process.ExitCode -ne 0) {
+            $detail = 'Scanner worker exited unexpectedly.'
+            if ($state.ErrorPath -and [System.IO.File]::Exists($state.ErrorPath)) {
+                try { $detail = [System.IO.File]::ReadAllText($state.ErrorPath).Trim() } catch {}
+            }
+            $state.Status.Text = "Scan failed: $detail"
+        }
+        else {
+            $state.Progress.Value = 100
+            $state.Status.Text = "Scan complete | $($state.Items.Count) matching ping-responsive devices"
+        }
+
+        $state.Process.Dispose()
+        $state.Process = $null
+        if ($state.Folder -and [System.IO.Directory]::Exists($state.Folder)) {
+            try { [System.IO.Directory]::Delete($state.Folder, $true) } catch {}
+        }
+    }.GetNewClosure())
+
+    $state.Start.Add_Click({
+        if ($state.Process -and -not $state.Process.HasExited) { return }
+        try {
+            $targets = @(Get-WPFScannerTargets -Target $state.Target.Text)
+            if ($targets.Count -lt 1) { throw "No usable addresses were entered." }
+
+            $state.Timer.Stop()
+            $state.Items.Clear()
+            $state.Progress.Value = 0
+            $state.NextLine = 0
+            $state.Total = $targets.Count
+            $state.WasStopped = $false
+
+            $folder = Join-Path $env:TEMP ("ITBros-IPScan-" + [guid]::NewGuid().ToString('N'))
+            [void](New-Item -ItemType Directory -Path $folder -Force)
+            $state.Folder = $folder
+            $targetFile = Join-Path $folder 'targets.txt'
+            $workerFile = Join-Path $folder 'scanner-worker.ps1'
+            $state.ResultPath = Join-Path $folder 'results.jsonl'
+            $state.ProgressPath = Join-Path $folder 'progress.txt'
+            $state.ErrorPath = Join-Path $folder 'error.txt'
+            $targetText = ((@($targets | ForEach-Object { [string]$_ }) -join [Environment]::NewLine) + [Environment]::NewLine)
+            [System.IO.File]::WriteAllText($targetFile, $targetText)
+            [System.IO.File]::WriteAllText($workerFile, $worker, [System.Text.UTF8Encoding]::new($false))
+
+            $argsList = @(
+                '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
+                '-File', ('"' + $workerFile + '"'),
+                '-TargetFile', ('"' + $targetFile + '"'),
+                '-ResultFile', ('"' + $state.ResultPath + '"'),
+                '-ProgressFile', ('"' + $state.ProgressPath + '"'),
+                '-ErrorFile', ('"' + $state.ErrorPath + '"')
+            )
+            if ($state.Ports.IsChecked) { $argsList += '-ProbePorts' }
+            if ($state.Filter.SelectedIndex -eq 1) { $argsList += '-PrintersOnly' }
+            if ($state.NetBIOS.IsChecked) { $argsList += '-ResolveNetBIOS' }
+            $powershellExe = Join-Path $PSHOME 'powershell.exe'
+            $state.Process = Start-Process -FilePath $powershellExe -ArgumentList $argsList -PassThru -WindowStyle Hidden -ErrorAction Stop
+
+            $state.Start.IsEnabled = $false
+            $state.Stop.IsEnabled = $true
+            $state.Export.IsEnabled = $false
+            $state.Status.Text = "Scanning $($state.Total) addresses..."
+            $state.Timer.Start()
+        }
+        catch {
+            [void][System.Windows.MessageBox]::Show(
+                $_.Exception.Message, 'ITBros IP Scanner',
+                [System.Windows.MessageBoxButton]::OK,
+                [System.Windows.MessageBoxImage]::Warning
+            )
+            $state.Start.IsEnabled = $true
+            $state.Stop.IsEnabled = $false
+        }
+    }.GetNewClosure())
+
+    $state.Stop.Add_Click({
+        if ($state.Process -and -not $state.Process.HasExited) {
+            $state.WasStopped = $true
+            try { $state.Process.Kill() } catch {}
+            $state.Status.Text = "Stopping scan..."
+        }
+    }.GetNewClosure())
+
+    $state.Export.Add_Click({
+        if ($state.Items.Count -eq 0) { return }
+        $dialog = New-Object System.Windows.Forms.SaveFileDialog
+        $dialog.Filter = 'CSV files (*.csv)|*.csv'
+        $dialog.FileName = 'ITBros-IPScan.csv'
+        if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            try {
+                $state.Items | Select-Object IP, Hostname, DeviceType, Latency, MAC, Ports |
+                    Export-Csv -LiteralPath $dialog.FileName -NoTypeInformation -Encoding UTF8
+                $state.Status.Text = "Exported $($state.Items.Count) devices to CSV."
+            }
+            catch {
+                [void][System.Windows.MessageBox]::Show(
+                    "Could not save the CSV: $($_.Exception.Message)",
+                    'ITBros IP Scanner', 'OK', 'Error'
+                )
+            }
+        }
+    }.GetNewClosure())
+
+    $window.Add_Closing({
+        $state.Timer.Stop()
+        if ($state.Process) {
+            try {
+                if (-not $state.Process.HasExited) { $state.Process.Kill() }
+            } catch {}
+            try { $state.Process.Dispose() } catch {}
+        }
+        if ($state.Folder -and (Test-Path -LiteralPath $state.Folder)) {
+            Remove-Item -LiteralPath $state.Folder -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }.GetNewClosure())
+
+    $window.Show() | Out-Null
+}
+
 $inputXML = '<Window x:Class="WinUtility.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -3702,7 +3394,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
             <Setter Property="Padding" Value="12,8"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
-        <!-- Global button styling for Install, Tweaks, Config, Updates and MicroWin -->
+        <!-- Global button styling for Install, Tweaks, Config, Updates -->
         <Style TargetType="Button">
             <Setter Property="Margin" Value="3"/>
             <Setter Property="Foreground" Value="{ButtonForegroundColor}"/>
@@ -3976,14 +3668,14 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             <ToggleButton Name="WPFTab2BT" Content="Tweaks" Style="{StaticResource ModernNav}" Width="80" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab3BT" Content="Config" Style="{StaticResource ModernNav}" Width="77" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab4BT" Content="Updates" Style="{StaticResource ModernNav}" Width="86" Height="42" Margin="3,0" FontWeight="SemiBold"/>
-                            <ToggleButton Name="WPFTab5BT" Content="MicroWin" Style="{StaticResource ModernNav}" Width="92" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            
                         </StackPanel>
                         <TextBox Grid.Column="2" Name="CheckboxFilter" Text="Ctrl-F to filter" Visibility="Collapsed" Height="38" Width="178"
                                  Style="{StaticResource ModernSearch}" ToolTip="Search applications on the Install tab (Ctrl+F)"/>
                     </Grid>
                 </Border>
                 <ScrollViewer Grid.Row="1" Padding="-1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
-                <TabControl Name="WPFTabNav" Background="{MainBackgroundColor}" Width="Auto" Height="Auto" SelectedIndex="5">
+                <TabControl Name="WPFTabNav" Background="{MainBackgroundColor}" Width="Auto" Height="Auto" SelectedIndex="4">
                     <TabItem Header="Install" Visibility="Collapsed" Name="WPFTab1">
                         <Grid Background="Transparent">
                             <Grid.ColumnDefinitions>
@@ -4340,150 +4032,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             </StackPanel>
                         </Grid>
                     </TabItem>
-                    <TabItem Header="MicroWin" Visibility="Collapsed" Name="WPFTab5" Width="Auto" Height="Auto">
-                        <Grid Width="Auto" Height="Auto">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="4*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
-                            <Border BorderBrush="Yellow" CornerRadius="2" BorderThickness="2" Margin="1" Grid.Row="0" Grid.Column="0">
-                            <StackPanel Name="MicrowinMain" Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Column="0" Grid.Row="0">
-                                <StackPanel Background="Transparent" SnapsToDevicePixels="True" Margin="1">
-                                    <TextBlock Margin="1" Padding="1" TextWrapping="Wrap" Foreground="{ComboBoxForegroundColor}">
-                                        Choose a Windows ISO file that you''ve downloaded. <LineBreak/>
-                                        Check for status in the console.
-                                    </TextBlock>
-                                    <TextBox Name="MicrowinFinalIsoLocation" Background="Transparent" BorderThickness="1" BorderBrush="{MainForegroundColor}"
-                                        Text="ISO location will be printed here"
-                                        IsReadOnly="True"
-                                        TextWrapping="Wrap"
-                                        Foreground="{LabelboxForegroundColor}"
-                                    />
-                                    <Button Name="WPFGetIso" Margin="2" Padding="15">
-                                       <Button.Content>
-                                            <TextBlock Background="Transparent" Foreground="{ButtonForegroundColor}">
-                                                Select Windows <Underline>I</Underline>SO
-                                            </TextBlock>
-                                        </Button.Content>
-                                    </Button>
-                                </StackPanel>
-                                <!-- Visibility="Hidden" -->
-                                <StackPanel Name="MicrowinOptionsPanel" HorizontalAlignment="Left" SnapsToDevicePixels="True" Margin="1" Visibility="Hidden">
-                                    <TextBlock Margin="6" Padding="1" TextWrapping="Wrap">Chose Windows SKU</TextBlock>
-                                    <ComboBox x:Name = "MicrowinWindowsFlavors" Margin="1" />
-                                    <TextBlock Margin="6" Padding="1" TextWrapping="Wrap">Choose Windows features you want to remove from the ISO</TextBlock>
-                                    <CheckBox Name="WPFMicrowinKeepProvisionedPackages" Content="Keep Provisioned Packages" Margin="5,0" ToolTip="Do not remove Microsoft Provisioned packages from the ISO."/>
-                                    <CheckBox Name="WPFMicrowinKeepAppxPackages" Content="Keep Appx Packages" Margin="5,0" ToolTip="Do not remove Microsoft Appx packages from the ISO."/>
-                                    <CheckBox Name="WPFMicrowinKeepDefender" Content="Keep Defender" Margin="5,0" IsChecked="True" ToolTip="Do not remove Microsoft Antivirus from the ISO."/>
-                                    <CheckBox Name="WPFMicrowinKeepEdge" Content="Keep Edge" Margin="5,0" IsChecked="True" ToolTip="Do not remove Microsoft Edge from the ISO."/>
-                                    <Rectangle Fill="{MainForegroundColor}" Height="2" HorizontalAlignment="Stretch" Margin="0,10,0,10"/>
-                                    <CheckBox Name="MicrowinInjectDrivers" Content="Inject drivers (I KNOW WHAT I''M DOING)" Margin="5,0" IsChecked="False" ToolTip="Path to unpacked drivers all sys and inf files for devices that need drivers"/>
-                                    <TextBox Name="MicrowinDriverLocation" Background="Transparent" BorderThickness="1" BorderBrush="{MainForegroundColor}"
-                                        Margin="6"
-                                        Text=""
-                                        IsReadOnly="False"
-                                        TextWrapping="Wrap"
-                                        Foreground="{LabelboxForegroundColor}"
-                                        ToolTip="Path to unpacked drivers all sys and inf files for devices that need drivers"
-                                    />
-                                    <Rectangle Fill="{MainForegroundColor}" Height="2" HorizontalAlignment="Stretch" Margin="0,10,0,10"/>
-                                    <CheckBox Name="WPFMicrowinCopyToUsb" Content="Copy to Ventoy" Margin="5,0" IsChecked="False" ToolTip="Copy to USB disk with a label Ventoy"/>
-                                    <Rectangle Fill="{MainForegroundColor}" Height="2" HorizontalAlignment="Stretch" Margin="0,10,0,10"/>
-                                    <Button Name="WPFMicrowin" Content="Start the process" Margin="2" Padding="15"/>
-                                </StackPanel>
-                                <StackPanel HorizontalAlignment="Left" SnapsToDevicePixels="True" Margin="1" Visibility="Collapsed">
-                                    <TextBlock Name="MicrowinIsoDrive" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                    <TextBlock Name="MicrowinIsoLocation" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                    <TextBlock Name="MicrowinMountDir" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                    <TextBlock Name="MicrowinScratchDir" VerticalAlignment="Center"  Margin="1" Padding="1" TextWrapping="WrapWithOverflow" Foreground="{ComboBoxForegroundColor}"/>
-                                </StackPanel>
-                            </StackPanel>
-                            </Border>
-                            <Border Background="{MainBackgroundColor}" 
-                                VerticalAlignment="Stretch"
-                                HorizontalAlignment="Stretch"
-                                BorderBrush="Yellow" 
-                                CornerRadius="2" 
-                                BorderThickness="2"
-                                Grid.Row="0" Grid.Column="1"
-                                Margin="1">
-                                <StackPanel HorizontalAlignment="Left" Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Visibility="Visible" 
-                                    >
-                                    <TextBlock x:Name = "asciiTextBlock"
-                                        xml:space ="preserve"
-                                        HorizontalAlignment = "Center"
-                                        Margin = "0"
-                                        VerticalAlignment = "Top"
-                                        Height = "Auto"
-                                        Width = "Auto"
-                                        FontSize = "10"
-                                        FontFamily = "Courier New"
-                                    >
-  /\/\  (_)  ___  _ __   ___  / / /\ \ \(_) _ __    
- /    \ | | / __|| ''__| / _ \ \ \/  \/ /| || ''_ \  
-/ /\/\ \| || (__ | |   | (_) | \  /\  / | || | | | 
-\/    \/|_| \___||_|    \___/   \/  \/  |_||_| |_| 
-                                    </TextBlock>
-                                    <TextBlock Margin="15,15,15,0" 
-                                        Padding="8,8,8,0" 
-                                        VerticalAlignment="Center" 
-                                        TextWrapping="WrapWithOverflow" 
-                                        Height = "Auto"
-                                        Width = "Auto"
-                                        Foreground="{ComboBoxForegroundColor}">
-                                        <Bold>MicroWin features:</Bold><LineBreak/>
-                                        - Remove Telemetry and Tracking <LineBreak/>
-                                        - Add ability to use local accounts <LineBreak/>
-                                        - Remove Wifi requirement to finish install <LineBreak/>
-                                        - Ability to remove Edge <LineBreak/>
-                                        - Ability to remove Defender <LineBreak/>
-                                        - Remove Teams <LineBreak/>
-                                        - Apps debloat <LineBreak/>
-                                        <LineBreak/>
-                                        <LineBreak/>
-
-                                        <Bold>INSTRUCTIONS</Bold> <LineBreak/>
-                                        - Download latest Windows 11 image from Microsoft <LineBreak/>
-                                            https://www.microsoft.com/software-download/windows11
-                                            several minutes to process the ISO depending on your machine. <LineBreak/>
-                                        - Put it somewhere on the C: drive so it is easily accessible <LineBreak/>
-                                        - Launch WinUtil and MicroWin  <LineBreak/>
-                                        - Click on Get Iso image button and wait for WinUtil to process the Image <LineBreak/>
-                                            It will be processed and unpacked which could take some time <LineBreak/>
-                                        - Once done, chose which Windows flavor you want to base your image on <LineBreak/>
-                                        - Chose which features you want to keep <LineBreak/>
-                                        - Click Start Process button <LineBreak/>
-                                        NOTE: Process of creating Windows image will take a long time, please check the Console and wait for it to say "Done" <LineBreak/>
-                                        <Bold>Once it is done the microwin.iso will be in the %temp% directory</Bold> <LineBreak/>
-                                        Copy this image to your Ventoy USB Stick, boot to this image. gg,
-                                        <LineBreak/>
-                                        If you are injecting drivers make sure to put all your inf, sys and dll file for each driver into a separate directory. For example:
-                                    </TextBlock>
-                                    <TextBlock Margin="15,0,15,15" 
-                                        Padding = "1" 
-                                        TextWrapping="WrapWithOverflow" 
-                                        Height = "Auto"
-                                        Width = "Auto"
-                                        VerticalAlignment = "Top"
-                                        Foreground = "{ComboBoxForegroundColor}"
-                                        xml:space = "preserve"
-                                    >
-C:\drivers\
-        |-- Driver1\
-        |   |-- Driver1.inf
-        |   |-- Driver1.sys
-        |-- Driver2\
-        |   |-- Driver2.inf
-        |   |-- Driver2.sys
-        |-- OtherFiles...
-                                    </TextBlock>
-                               </StackPanel>
-                            </Border>
-                        </Grid>
-                    </TabItem>
                     <!-- Modern IT Support dashboard: search and two-column categories -->
                     <TabItem Header="IT Support" Visibility="Collapsed" Name="WPFTab6">
                         <StackPanel Background="{MainBackgroundColor}" Margin="20,18,20,22">
@@ -4552,7 +4100,7 @@ C:\drivers\
                                         <DockPanel Margin="5,0,5,12">
                                             <TextBlock DockPanel.Dock="Left" Text="Network Troubleshooting" Foreground="#F3F6FB"
                                                        FontSize="17" FontWeight="SemiBold"/>
-                                            <TextBlock Text="10 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                            <TextBlock Text="11 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
                                                        FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </DockPanel>
                                         <UniformGrid Columns="2">
@@ -4565,6 +4113,7 @@ C:\drivers\
                                     <Button Name="WPFSupAdvFirewall" Content="Advanced Firewall" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Advanced Firewall"/>
                                     <Button Name="WPFSupIPConfig" Content="IP Configuration" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="IP Configuration"/>
                                     <Button Name="WPFSupNetstat" Content="Active Connections" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Active Connections"/>
+                                    <Button Name="WPFSupIPScanner" Content="ITBros IP Scanner" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Discover network devices and export to CSV"/>
                                     <Button Name="WPFSupDNSLookup" Content="DNS Lookup" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="DNS Lookup"/>
                                         </UniformGrid>
                                     </StackPanel>
@@ -8119,16 +7668,6 @@ $commonKeyEvents = {
 
 
     if ($_.KeyboardDevice.Modifiers -eq "Alt") {
-        # this is an example how to handle shortcuts per tab
-        # Alt-I on the MicroWin tab (4) would press GetIso Button
-        # NOTE: All per tab shortcuts have to be handled *before* regular tab keys
-        # if ($_.SystemKey -eq "I") {
-        #     $TabNav = Get-WinUtilVariables | Where-Object {$psitem -like "WPFTabNav"}
-        #     if ($sync.$TabNav.Items[4].IsSelected -eq $true) {
-        #         Invoke-WPFButton "WPFGetIso"
-        #         break
-        #     }
-        # }
         if ($_.SystemKey -eq "I") {
             Invoke-WPFButton "WPFTab1BT"
         }
@@ -8140,9 +7679,6 @@ $commonKeyEvents = {
         }
         if ($_.SystemKey -eq "U") {
             Invoke-WPFButton "WPFTab4BT"
-        }
-        if ($_.SystemKey -eq "M") {
-            Invoke-WPFButton "WPFTab5BT"
         }
         if ($_.SystemKey -eq "S") {
             Invoke-WPFButton "WPFTab6BT"
