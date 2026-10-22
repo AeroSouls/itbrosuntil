@@ -55,5 +55,6 @@ function Invoke-WPFButton {
         "WPFGetInstalledTweaks" {Invoke-WPFGetInstalled -CheckBox "tweaks"}
         "WPFGetIso" {Invoke-WPFGetIso}
         "WPFMicrowin" {Invoke-WPFMicrowin}
+        "WPFSup*" {Invoke-WPFSupportTool -Button $Button}
     }
 }
