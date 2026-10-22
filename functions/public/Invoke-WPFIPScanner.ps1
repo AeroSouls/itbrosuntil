@@ -88,14 +88,14 @@ function Invoke-WPFIPScanner {
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                        <Border x:Name="BasicButtonSurface" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Surface" Property="Background" Value="#3F5971"/>
+                                <Setter TargetName="BasicButtonSurface" Property="Background" Value="#3F5971"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.45"/>
@@ -423,10 +423,8 @@ catch {
             }
         }
         catch {
-            $state.Timer.Stop()
-            $state.Start.IsEnabled = $true
-            $state.Stop.IsEnabled = $false
-            $state.Status.Text = "Scanner error: $($_.Exception.Message)"
+            # A temporary file read conflict should not stop or orphan a running scan.
+            $state.Status.Text = "Updating scan results; retrying... $($_.Exception.Message)"
         }
     }.GetNewClosure())
 
