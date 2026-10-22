@@ -30,21 +30,25 @@ Use Windows PowerShell 5.1 on a trusted Windows computer. Download `winutil.ps1`
 
 Open **IT Support → Network Troubleshooting → ITBros IP Scanner**. The scanner opens in its own resizable window. Enter an IPv4 target and click **Start scan**.
 
-### Launch the current test build (v0.2)
+### Launch the current test build (v0.3)
 
 Close all existing ITBros Utility windows and start a fresh Windows PowerShell session. Download from the **test branch**, not `main`:
 
 ```powershell
-Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/AeroSouls/itbrosuntil/test/itbros-ip-scanner/winutil.ps1' -OutFile "$env:TEMP\ITBros-IPScanner-Test-v02.ps1"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\ITBros-IPScanner-Test-v02.ps1"
+Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/AeroSouls/itbrosuntil/test/itbros-ip-scanner/winutil.ps1' -OutFile "$env:TEMP\ITBros-IPScanner-Test-v03.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\ITBros-IPScanner-Test-v03.ps1"
 ```
 
-The scanner title must say **ITBros | IP Scanner TEST v0.2**. If you still see an older error showing the entire `<Window>` markup, you are running an earlier script. The new build shows a concise underlying error if initialization fails.
+The scanner title must say **ITBros | IP Scanner TEST v0.3**. If you still see an older error showing the entire `<Window>` markup, you are running an earlier script. The new build shows a concise underlying error if initialization fails.
 
 - Accepts a single IP (`192.168.1.10`), full start-end range (`192.168.1.10-192.168.1.50`), or CIDR subnet (`192.168.1.0/24`).
 - No automatic scanning. At most **1,024 addresses** are allowed per scan. Scan only networks you are authorized to administer.
-- Scans in small parallel batches and reports responding devices, reverse-DNS hostnames (if available), ICMP latency, and local-neighbor MAC addresses when Windows knows them.
-- Optional check of TCP ports **80, 443, 445, 3389** can discover some devices blocking ICMP and show commonly reachable ports. This is not a full port scan or vulnerability assessment.
+- Displays **only devices that successfully answer ICMP ping**, in a table with readable dark headers and plain IP addresses.
+- Resolves device names using reverse DNS (when available), with an optional slower NetBIOS name lookup for Windows devices.
+- **Printers only** searches common printing ports 515, 631 and 9100 and recognizable printer hostnames. This is best-effort identification, not proof that a device is a printer. Printers that block ping or don't expose these indicators won't appear.
+- Optional checks on ports 80, 443, 445 and 3389 for responding devices; clickable web links for HTTP 80, HTTPS 443 and IPP web interface 631. Non-web ports such as 445 and 3389 are not opened in a browser.
+- Shows ICMP latency and local-neighbor MAC addresses when Windows knows them.
+- TCP checks never add non-pinging devices. These are targeted service checks, not a full port scan or vulnerability assessment.
 - **Stop** terminates the scan worker, **Export CSV** saves found devices, and closing the window cleans up temporary scanner files.
 - Uses built-in Windows PowerShell and .NET APIs; does not install third-party scanner applications.
 
