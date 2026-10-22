@@ -161,11 +161,14 @@ $commonKeyEvents = {
 
     # Escape removes focus from the searchbox that way all shortcuts will start workinf again
     if ($_.Key -eq "Escape") {
-        if ($sync.CheckboxFilter.IsFocused)
-        {
-            $sync.CheckboxFilter.SelectAll()
+        if ($sync.WPFSupportSearch.IsFocused) {
+            $sync.WPFSupportSearch.Text = ""
+            $_.Handled = $true
+            return
+        }
+        if ($sync.CheckboxFilter.IsFocused) {
             $sync.CheckboxFilter.Text = ""
-            $sync.CheckboxFilter.Focus()
+            $_.Handled = $true
             return
         }
     }
@@ -219,13 +222,20 @@ $commonKeyEvents = {
             Invoke-WPFButton "WPFTab6BT"
         }
     }
-    # shortcut for the filter box
+    # Ctrl+F searches the IT Support dashboard or switches to Install for application search.
     if ($_.Key -eq "F" -and $_.KeyboardDevice.Modifiers -eq "Ctrl") {
-        if ($sync.CheckboxFilter.Text -eq "Ctrl-F to filter") {
+        if ($sync.WPFTab6.IsSelected) {
+            $sync.WPFSupportSearch.Focus()
+            $sync.WPFSupportSearch.SelectAll()
+        } else {
+            Invoke-WPFTab "WPFTab1BT"
+            if ($sync.CheckboxFilter.Text -eq "Ctrl-F to filter") {
+                $sync.CheckboxFilter.Text = ""
+            }
+            $sync.CheckboxFilter.Focus()
             $sync.CheckboxFilter.SelectAll()
-            $sync.CheckboxFilter.Text = ""
         }
-        $sync.CheckboxFilter.Focus()
+        $_.Handled = $true
     }
 }
 $sync["Form"].Add_PreViewKeyDown($commonKeyEvents)
@@ -291,8 +301,50 @@ $sync["Form"].Add_Loaded({
     
     # Move the window to that position...
     [Void][Window]::MoveWindow($windowHandle, $x, $y, $width, $height, $True)
-    Invoke-WPFTab "WPFTab1BT"
+    Invoke-WPFTab "WPFTab6BT"
     $sync["Form"].Focus()
+})
+
+# Search the IT Support tool cards without changing which actions they execute.
+$sync["WPFSupportSearch"].Add_GotFocus({
+    if ($sync.WPFSupportSearch.Text -eq "Search tools...") {
+        $sync.WPFSupportSearch.Text = ""
+    }
+})
+$sync["WPFSupportSearch"].Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($sync.WPFSupportSearch.Text)) {
+        $sync.WPFSupportSearch.Text = "Search tools..."
+    }
+})
+$sync["WPFSupportSearch"].Add_TextChanged({
+    $query = $sync.WPFSupportSearch.Text.Trim()
+    if ($query -eq "Search tools...") { $query = "" }
+
+    foreach ($cardId in @(
+        "WPFSupCardSystem", "WPFSupCardPrinters", "WPFSupCardNetwork",
+        "WPFSupCardSecurity", "WPFSupCardDiagnostics",
+        "WPFSupCardRepairs", "WPFSupCardResources"
+    )) {
+        $card = $sync[$cardId]
+        if ($null -eq $card) { continue }
+
+        # Card has a StackPanel containing a heading DockPanel and a UniformGrid of buttons.
+        $buttonGrid = $card.Child.Children[1]
+        $categoryMatch = $card.Tag.ToString().IndexOf(
+            $query, [System.StringComparison]::OrdinalIgnoreCase
+        ) -ge 0
+
+        $visible = 0
+        foreach ($button in $buttonGrid.Children) {
+            $nameMatch = $button.Content.ToString().IndexOf(
+                $query, [System.StringComparison]::OrdinalIgnoreCase
+            ) -ge 0
+            $show = ($query.Length -eq 0) -or $categoryMatch -or $nameMatch
+            $button.Visibility = if ($show) { "Visible" } else { "Collapsed" }
+            if ($show) { $visible++ }
+        }
+        $card.Visibility = if ($visible -gt 0) { "Visible" } else { "Collapsed" }
+    }
 })
 
 $sync["CheckboxFilter"].Add_TextChanged({
