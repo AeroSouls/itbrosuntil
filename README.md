@@ -29,8 +29,6 @@ Use Windows PowerShell 5.1 on a trusted Windows computer. Download `winutil.ps1`
 ## ITBros contact
 
 Website: https://itbros.gg  
-Support email: support@itbros.gg  
-Phone: (919) 907-2599
 
 The app header uses the ITBros logo hosted on itbros.gg. A network connection may be required for the logo to load on a new PC.
 
