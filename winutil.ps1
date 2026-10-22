@@ -3969,7 +3969,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                         <Image Grid.Column="0" Name="WPFIcon" Width="161" Height="105"
                                Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left"
                                RenderOptions.BitmapScalingMode="HighQuality"
-                               ToolTip="ITBros LLC" Source="https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"/>
+                               ToolTip="ITBros LLC" Source="https://raw.githubusercontent.com/AeroSouls/itbrosuntil/main/assets/itbros-logo-white.png"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <ToggleButton Name="WPFTab6BT" Content="IT Support" Style="{StaticResource ModernNav}" Width="115" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab1BT" Content="Install" Style="{StaticResource ModernNav}" Width="76" Height="42" Margin="3,0" FontWeight="SemiBold"/>
@@ -8179,7 +8179,7 @@ $sync["Form"].Add_MouseLeftButtonDown({
 # Load the official 2024 ITBros logo into the WPF header and title bar.
 # A distinct file name prevents the previous white monitor logo from being reused.
 $sync["Form"].Add_Loaded({
-    $downloadUrl = "https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"
+    $downloadUrl = "https://raw.githubusercontent.com/AeroSouls/itbrosuntil/main/assets/itbros-logo-white.png"
     $destinationPath = Join-Path $env:TEMP "itbros-logo-white-asset-2024.png"
 
     if (-not (Test-Path -LiteralPath $destinationPath)) {
