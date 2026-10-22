@@ -1050,7 +1050,7 @@ C:\drivers\
                                         <DockPanel Margin="5,0,5,12">
                                             <TextBlock DockPanel.Dock="Left" Text="Network Troubleshooting" Foreground="#F3F6FB"
                                                        FontSize="17" FontWeight="SemiBold"/>
-                                            <TextBlock Text="10 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                            <TextBlock Text="11 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
                                                        FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </DockPanel>
                                         <UniformGrid Columns="2">
@@ -1063,6 +1063,7 @@ C:\drivers\
                                     <Button Name="WPFSupAdvFirewall" Content="Advanced Firewall" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Advanced Firewall"/>
                                     <Button Name="WPFSupIPConfig" Content="IP Configuration" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="IP Configuration"/>
                                     <Button Name="WPFSupNetstat" Content="Active Connections" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Active Connections"/>
+                                    <Button Name="WPFSupIPScanner" Content="ITBros IP Scanner" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Discover network devices and export to CSV"/>
                                     <Button Name="WPFSupDNSLookup" Content="DNS Lookup" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="DNS Lookup"/>
                                         </UniformGrid>
                                     </StackPanel>
