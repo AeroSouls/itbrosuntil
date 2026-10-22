@@ -467,7 +467,7 @@
                         <Image Grid.Column="0" Name="WPFIcon" Width="161" Height="105"
                                Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left"
                                RenderOptions.BitmapScalingMode="HighQuality"
-                               ToolTip="ITBros LLC" Source="https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"/>
+                               ToolTip="ITBros LLC" Source="https://raw.githubusercontent.com/AeroSouls/itbrosuntil/main/assets/itbros-logo-white.png"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <ToggleButton Name="WPFTab6BT" Content="IT Support" Style="{StaticResource ModernNav}" Width="115" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab1BT" Content="Install" Style="{StaticResource ModernNav}" Width="76" Height="42" Margin="3,0" FontWeight="SemiBold"/>
