@@ -30,6 +30,17 @@ Use Windows PowerShell 5.1 on a trusted Windows computer. Download `winutil.ps1`
 
 Open **IT Support → Network Troubleshooting → ITBros IP Scanner**. The scanner opens in its own resizable window. Enter an IPv4 target and click **Start scan**.
 
+### Launch the current test build (v0.2)
+
+Close all existing ITBros Utility windows and start a fresh Windows PowerShell session. Download from the **test branch**, not `main`:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/AeroSouls/itbrosuntil/test/itbros-ip-scanner/winutil.ps1' -OutFile "$env:TEMP\ITBros-IPScanner-Test-v02.ps1"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\ITBros-IPScanner-Test-v02.ps1"
+```
+
+The scanner title must say **ITBros | IP Scanner TEST v0.2**. If you still see an older error showing the entire `<Window>` markup, you are running an earlier script. The new build shows a concise underlying error if initialization fails.
+
 - Accepts a single IP (`192.168.1.10`), full start-end range (`192.168.1.10-192.168.1.50`), or CIDR subnet (`192.168.1.0/24`).
 - No automatic scanning. At most **1,024 addresses** are allowed per scan. Scan only networks you are authorized to administer.
 - Scans in small parallel batches and reports responding devices, reverse-DNS hostnames (if available), ICMP latency, and local-neighbor MAC addresses when Windows knows them.
