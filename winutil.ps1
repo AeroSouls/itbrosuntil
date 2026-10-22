@@ -3621,7 +3621,7 @@ function Invoke-WPFIPScanner {
     $scannerXaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ITBros | IP Scanner TEST v0.3" Width="1160" Height="700"
+        Title="ITBros | IP Scanner TEST v0.3.1" Width="1160" Height="700"
         MinWidth="810" MinHeight="490" WindowStartupLocation="CenterOwner"
         Background="#101923" FontFamily="Segoe UI" FontSize="13">
     <Window.Resources>
@@ -3671,7 +3671,7 @@ function Invoke-WPFIPScanner {
                 <TextBlock Text="Device discovery for networks you are authorized to scan"
                            Foreground="#9EAFBE" Margin="0,5,0,0"/>
             </StackPanel>
-            <TextBlock DockPanel.Dock="Right" Text="TEST v0.3" Foreground="#FA9CA5"
+            <TextBlock DockPanel.Dock="Right" Text="TEST v0.3.1" Foreground="#FA9CA5"
                        HorizontalAlignment="Right" FontWeight="Bold" FontSize="11"
                        Margin="0,9,0,0"/>
         </DockPanel>
@@ -3799,7 +3799,7 @@ function Invoke-WPFIPScanner {
             $summary = "XML line $($errorDetail.LineNumber), position $($errorDetail.LinePosition): $summary"
         }
         [void][System.Windows.MessageBox]::Show(
-            ("IP Scanner TEST v0.3 could not open." + [Environment]::NewLine + [Environment]::NewLine + $summary),
+            ("IP Scanner TEST v0.3.1 could not open." + [Environment]::NewLine + [Environment]::NewLine + $summary),
             'ITBros IP Scanner', 'OK', 'Error'
         )
         return
