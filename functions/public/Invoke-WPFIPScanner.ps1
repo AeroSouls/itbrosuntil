@@ -74,7 +74,7 @@ function Invoke-WPFIPScanner {
     $scannerXaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ITBros | IP Scanner (Test)" Width="1050" Height="680"
+        Title="ITBros | IP Scanner TEST v0.2" Width="1050" Height="680"
         MinWidth="810" MinHeight="490" WindowStartupLocation="CenterOwner"
         Background="#101923" FontFamily="Segoe UI" FontSize="13">
     <Window.Resources>
@@ -89,7 +89,7 @@ function Invoke-WPFIPScanner {
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="BasicButtonSurface" Background="{TemplateBinding Background}"
+                        <Border Name="BasicButtonSurface" Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1" CornerRadius="8" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -124,7 +124,7 @@ function Invoke-WPFIPScanner {
                 <TextBlock Text="Device discovery for networks you are authorized to scan"
                            Foreground="#9EAFBE" Margin="0,5,0,0"/>
             </StackPanel>
-            <TextBlock DockPanel.Dock="Right" Text="TEST BUILD" Foreground="#FA9CA5"
+            <TextBlock DockPanel.Dock="Right" Text="TEST v0.2" Foreground="#FA9CA5"
                        HorizontalAlignment="Right" FontWeight="Bold" FontSize="11"
                        Margin="0,9,0,0"/>
         </DockPanel>
@@ -183,16 +183,30 @@ function Invoke-WPFIPScanner {
 </Window>
 '@
 
+    # Use XmlReader instead of converting the entire XAML to [xml].
+    # Show the underlying XML/WPF error rather than echoing the complete markup.
+    $xmlReader = $null
+    $stringReader = $null
     try {
-        [xml]$xml = $scannerXaml
-        $window = [Windows.Markup.XamlReader]::Load([System.Xml.XmlNodeReader]::new($xml))
+        $stringReader = New-Object System.IO.StringReader($scannerXaml)
+        $xmlReader = [System.Xml.XmlReader]::Create($stringReader)
+        $window = [System.Windows.Markup.XamlReader]::Load($xmlReader)
     }
     catch {
+        $errorDetail = $_.Exception.GetBaseException()
+        $summary = $errorDetail.Message
+        if ($errorDetail -is [System.Xml.XmlException]) {
+            $summary = "XML line $($errorDetail.LineNumber), position $($errorDetail.LinePosition): $summary"
+        }
         [void][System.Windows.MessageBox]::Show(
-            "Unable to open the IP scanner: $($_.Exception.Message)",
+            ("IP Scanner TEST v0.2 could not open." + [Environment]::NewLine + [Environment]::NewLine + $summary),
             'ITBros IP Scanner', 'OK', 'Error'
         )
         return
+    }
+    finally {
+        if ($xmlReader) { $xmlReader.Dispose() }
+        if ($stringReader) { $stringReader.Dispose() }
     }
 
     if ($sync -and $sync.Form) { $window.Owner = $sync.Form }
