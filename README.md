@@ -1,6 +1,6 @@
 # ITBros LLC Windows Utility
 
-Windows utility and troubleshooting toolkit for ITBros LLC. The original Install, Tweaks, Config, Updates, and MicroWin sections remain available. The new **IT Support** tab groups Windows administrative tools, printer shortcuts, network diagnostics, repair commands, and ITBros support links.
+Windows utility and troubleshooting toolkit for ITBros LLC. The Install, Tweaks, Config, and Updates sections remain available. MicroWin is removed from this test branch. The new **IT Support** tab groups Windows administrative tools, printer shortcuts, network diagnostics, repair commands, and ITBros support links.
 
 ## Run on Windows
 
@@ -10,9 +10,9 @@ Use Windows PowerShell 5.1 on a trusted Windows computer. Download `winutil.ps1`
 
 - **IT Support opens automatically** when the utility starts; its navigation button is first.
 - Modern dark palette, rounded buttons, and clear two-column cards with vertical scrolling.
-- Filter the 57 support tools by name or category using **Search tools**. `Ctrl+F` focuses support search from IT Support, or selects the dedicated application search on other tabs.
-- Install, Tweaks, Config, Updates, and MicroWin are preserved.
-- Navigation shortcuts: `Alt+S` (Support), `Alt+I` (Install), `Alt+T` (Tweaks), `Alt+C` (Config), `Alt+U` (Updates), and `Alt+M` (MicroWin).
+- Filter the 58 support tools by name or category using **Search tools**. `Ctrl+F` focuses support search from IT Support, or selects the dedicated application search on other tabs.
+- Install, Tweaks, Config, and Updates are preserved; MicroWin ISO creation has been removed.
+- Navigation shortcuts: `Alt+S` (Support), `Alt+I` (Install), `Alt+T` (Tweaks), `Alt+C` (Config), and `Alt+U` (Updates).
 
 ## IT Support tab
 
