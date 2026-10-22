@@ -26,6 +26,21 @@ Use Windows PowerShell 5.1 on a trusted Windows computer. Download `winutil.ps1`
 
 **Note:** Some Windows tools are unavailable on Home editions. Repair commands can change the system, take time, or require a restart. Verify they are appropriate for the machine before confirming.
 
+## ITBros IP Scanner (test branch only)
+
+Open **IT Support → Network Troubleshooting → ITBros IP Scanner**. The scanner opens in its own resizable window. Enter an IPv4 target and click **Start scan**.
+
+- Accepts a single IP (`192.168.1.10`), full start-end range (`192.168.1.10-192.168.1.50`), or CIDR subnet (`192.168.1.0/24`).
+- No automatic scanning. At most **1,024 addresses** are allowed per scan. Scan only networks you are authorized to administer.
+- Scans in small parallel batches and reports responding devices, reverse-DNS hostnames (if available), ICMP latency, and local-neighbor MAC addresses when Windows knows them.
+- Optional check of TCP ports **80, 443, 445, 3389** can discover some devices blocking ICMP and show commonly reachable ports. This is not a full port scan or vulnerability assessment.
+- **Stop** terminates the scan worker, **Export CSV** saves found devices, and closing the window cleans up temporary scanner files.
+- Uses built-in Windows PowerShell and .NET APIs; does not install third-party scanner applications.
+
+This is an initial Windows test build, not a full replacement for Advanced IP Scanner. Network firewall policies, ICMP blocking, reverse DNS availability, and router separation can limit results. The worker uses a temporary PowerShell script and deletes it after the scan. Target-validation tests are in `pester/ipscanner.Tests.ps1`.
+
+**Windows testing required before merging to main.**
+
 ## ITBros contact
 
 Website: https://itbros.gg  
