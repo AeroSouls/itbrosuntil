@@ -74,7 +74,7 @@ function Invoke-WPFIPScanner {
     $scannerXaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ITBros | IP Scanner TEST v0.2" Width="1050" Height="680"
+        Title="ITBros | IP Scanner TEST v0.3" Width="1160" Height="700"
         MinWidth="810" MinHeight="490" WindowStartupLocation="CenterOwner"
         Background="#101923" FontFamily="Segoe UI" FontSize="13">
     <Window.Resources>
@@ -124,7 +124,7 @@ function Invoke-WPFIPScanner {
                 <TextBlock Text="Device discovery for networks you are authorized to scan"
                            Foreground="#9EAFBE" Margin="0,5,0,0"/>
             </StackPanel>
-            <TextBlock DockPanel.Dock="Right" Text="TEST v0.2" Foreground="#FA9CA5"
+            <TextBlock DockPanel.Dock="Right" Text="TEST v0.3" Foreground="#FA9CA5"
                        HorizontalAlignment="Right" FontWeight="Bold" FontSize="11"
                        Margin="0,9,0,0"/>
         </DockPanel>
@@ -143,8 +143,18 @@ function Invoke-WPFIPScanner {
                              Text="" ToolTip="Example: 192.168.1.0/24 or 192.168.1.10-192.168.1.50"/>
                     <TextBlock Text="Examples: 192.168.1.0/24  |  10.0.0.10-10.0.0.50  |  192.168.1.1"
                                Foreground="#A6B8CA" FontSize="11" Margin="0,8,0,0"/>
-                    <CheckBox Name="ScanPorts" Content="Also check TCP ports 80, 443, 445 and 3389 (may detect devices blocking ping)"
-                              Foreground="#D5E0EB" Margin="0,13,0,0" IsChecked="False"/>
+                    <CheckBox Name="ScanPorts" Content="Check TCP ports on ping-responsive devices (80, 443, 445, 3389)"
+                              Foreground="#D5E0EB" Margin="0,12,0,0" IsChecked="False"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="SHOW:" Foreground="#BECEDF" FontSize="11" FontWeight="Bold"
+                                   VerticalAlignment="Center" Margin="0,0,12,0"/>
+                        <ComboBox Name="ScanFilter" SelectedIndex="0" Height="33" Width="200"
+                                  Background="#203247" Foreground="#101923" FontSize="12"
+                                  ToolTip="Printer filter looks for TCP 9100, 631, 515 or printer names. All devices must respond to ping.">
+                            <ComboBoxItem Content="All responding devices"/>
+                            <ComboBoxItem Content="Likely printers only"/>
+                        </ComboBox>
+                    </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"
                             Margin="14,8,0,0">
@@ -167,17 +177,58 @@ function Invoke-WPFIPScanner {
                       Background="#192838" Foreground="#EEF3F8" RowBackground="#192838"
                       BorderThickness="0" GridLinesVisibility="None"
                       ColumnHeaderHeight="38" RowHeight="33" SelectionMode="Extended">
+                <DataGrid.Resources>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Setter Property="Foreground" Value="#EAF1F9"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="{x:Type DataGridColumnHeader}">
+                        <Setter Property="Background" Value="#263B51"/>
+                        <Setter Property="Foreground" Value="#FFFFFF"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="Padding" Value="12,0"/>
+                        <Setter Property="BorderBrush" Value="#435970"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="IP address" Binding="{Binding IP}" Width="155"/>
-                    <DataGridTextColumn Header="Hostname" Binding="{Binding Hostname}" Width="*"/>
-                    <DataGridTextColumn Header="Ping (ms)" Binding="{Binding Latency}" Width="92"/>
-                    <DataGridTextColumn Header="MAC (local LAN)" Binding="{Binding MAC}" Width="165"/>
-                    <DataGridTextColumn Header="Open TCP ports" Binding="{Binding Ports}" Width="154"/>
+                    <DataGridTextColumn Header="IP address" Binding="{Binding IP}" Width="145"/>
+                    <DataGridTextColumn Header="Device name" Binding="{Binding Hostname}" Width="*"/>
+                    <DataGridTextColumn Header="Type" Binding="{Binding DeviceType}" Width="118"/>
+                    <DataGridTextColumn Header="Ping (ms)" Binding="{Binding Latency}" Width="88"/>
+                    <DataGridTextColumn Header="MAC (local LAN)" Binding="{Binding MAC}" Width="145"/>
+                    <DataGridTextColumn Header="Open TCP ports" Binding="{Binding Ports}" Width="130"/>
+                    <DataGridTemplateColumn Header="Web UI" Width="118">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ItemsControl ItemsSource="{Binding WebLinks}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,0,9,0">
+                                                <Hyperlink NavigateUri="{Binding Url}" Foreground="#72C9FF"
+                                                           ToolTip="Open this HTTP(S) address in your browser">
+                                                    <Run Text="{Binding Label}"/>
+                                                </Hyperlink>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
         <TextBlock Grid.Row="4"
-                   Text="Only responding devices are shown. Hostnames and MAC addresses may be unavailable; TCP probes are optional."
+                   Text="Only successful ping replies are listed. Printer detection is best-effort; web links appear for HTTP, HTTPS and IPP services."
                    Foreground="#A7B8C8" FontSize="11" Margin="5,14,0,0" TextWrapping="Wrap"/>
     </Grid>
 </Window>
@@ -215,6 +266,7 @@ function Invoke-WPFIPScanner {
         Window = $window
         Target = $window.FindName('ScanTarget')
         Ports = $window.FindName('ScanPorts')
+        Filter = $window.FindName('ScanFilter')
         Start = $window.FindName('ScanStart')
         Stop = $window.FindName('ScanStop')
         Export = $window.FindName('ScanExport')
