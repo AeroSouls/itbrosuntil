@@ -1,36 +1,28 @@
 function Invoke-WPFTab {
-
     <#
-
     .SYNOPSIS
-        Sets the selected tab to the tab that was clicked
-
-    .PARAMETER ClickedTab
-        The name of the tab that was clicked
-
+        Selects a tab by its actual control instead of its numbered name.
     #>
+    param([Parameter(Mandatory=$true)][string]$ClickedTab)
 
-    Param ($ClickedTab)
+    $tabName = $ClickedTab -replace 'BT$', ''
+    if (-not $sync.ContainsKey($ClickedTab) -or -not $sync.ContainsKey($tabName)) { return }
 
-    $tabNav = Get-WinUtilVariables | Where-Object {$psitem -like "WPFTabNav"}
-    $tabNumber = [int]($ClickedTab -replace "WPFTab","" -replace "BT","") - 1
+    $tabControl = $sync['WPFTabNav']
+    $tabItem = $sync[$tabName]
+    if ($null -eq $tabControl -or $null -eq $tabItem) { return }
 
-    $filter = Get-WinUtilVariables -Type ToggleButton | Where-Object {$psitem -like "WPFTab?BT"}
-    $sync.GetEnumerator() | Where-Object {$psitem.Key -in $filter} | ForEach-Object {
-        if ($ClickedTab -ne $PSItem.name) {
-            $sync[$PSItem.Name].IsChecked = $false
-            # $tabNumber = [int]($PSItem.Name -replace "WPFTab","" -replace "BT","") - 1
-            # $sync.$tabNav.Items[$tabNumber].IsSelected = $false
-        }
-        else {
-            $sync["$ClickedTab"].IsChecked = $true
-            $tabNumber = [int]($ClickedTab-replace "WPFTab","" -replace "BT","") - 1
-            $sync.$tabNav.Items[$tabNumber].IsSelected = $true
-        }
+    $tabIndex = $tabControl.Items.IndexOf($tabItem)
+    if ($tabIndex -lt 0) { return }
+
+    $buttons = Get-WinUtilVariables -Type ToggleButton |
+        Where-Object { $_ -like 'WPFTab?BT' }
+    foreach ($name in $buttons) {
+        $sync[$name].IsChecked = ($name -eq $ClickedTab)
     }
+    $tabControl.SelectedIndex = $tabIndex
 
-    # The top search box is specifically for application selection on Install.
-    if ($sync.ContainsKey("CheckboxFilter")) {
-        $sync.CheckboxFilter.Visibility = if ($ClickedTab -eq "WPFTab1BT") { "Visible" } else { "Collapsed" }
+    if ($sync.ContainsKey('CheckboxFilter')) {
+        $sync.CheckboxFilter.Visibility = if ($ClickedTab -eq 'WPFTab1BT') { 'Visible' } else { 'Collapsed' }
     }
 }
