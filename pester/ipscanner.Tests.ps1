@@ -5,7 +5,9 @@ BeforeAll {
 
 Describe 'ITBros IP Scanner target parsing' {
     It 'accepts a single IPv4 address' {
-        @(Get-WPFScannerTargets -Target '192.168.5.12') | Should -Be @('192.168.5.12')
+        $targets = @(Get-WPFScannerTargets -Target '192.168.5.12')
+        $targets.Count | Should -Be 1
+        $targets[0] | Should -Be '192.168.5.12'
     }
 
     It 'expands a small inclusive start-end range' {
