@@ -272,7 +272,7 @@ $sync["Form"].Add_Loaded({
             $logo = New-Object System.Windows.Media.Imaging.BitmapImage
             $logo.BeginInit()
             $logo.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
-            $logo.UriSource = New-Object System.Uri($destinationPath)
+            $logo.UriSource = [System.Uri]::new($destinationPath)
             $logo.EndInit()
             $logo.Freeze()
             $sync.WPFIcon.Source = $logo
