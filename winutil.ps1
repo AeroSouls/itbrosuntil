@@ -3836,17 +3836,27 @@ function Invoke-WPFIPScanner {
     }
     $state.Results.ItemsSource = $state.Items
 
-    # Open only discovered HTTP(S) service URLs on an explicit user click.
+    # Open discovered HTTP(S) services on a user click, using the Windows default browser.
+    # Do not name the second parameter $args: PowerShell reserves that variable as an array.
     $navigate = [System.Windows.Navigation.RequestNavigateEventHandler] {
-        param($sender, $args)
-        $uri = $args.Uri
-        $args.Handled = $true
-        if (-not $uri -or $uri.Scheme -notin @('http','https')) { return }
+        param($sender, [System.Windows.Navigation.RequestNavigateEventArgs]$eventArgs)
+        $eventArgs.Handled = $true
+        $uri = $eventArgs.Uri
+        if (-not $uri -or -not $uri.IsAbsoluteUri) { return }
+        if ($uri.Scheme -notin @('http', 'https')) { return }
+
         $address = $null
         if (-not [System.Net.IPAddress]::TryParse($uri.Host, [ref]$address)) { return }
         if ($address.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { return }
-        if ($uri.Port -notin @(80,443,631,8080,8443)) { return }
-        try { Start-Process -FilePath $uri.AbsoluteUri -ErrorAction Stop }
+        if ($uri.Port -notin @(80, 443, 631, 8080, 8443)) { return }
+
+        try {
+            $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+            $startInfo.FileName = $uri.AbsoluteUri
+            $startInfo.UseShellExecute = $true
+            $browserProcess = [System.Diagnostics.Process]::Start($startInfo)
+            if ($browserProcess) { $browserProcess.Dispose() }
+        }
         catch {
             [void][System.Windows.MessageBox]::Show(
                 "Unable to open the web page: $($_.Exception.Message)",
