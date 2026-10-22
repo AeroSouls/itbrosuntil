@@ -248,8 +248,8 @@ $sync["Form"].Add_MouseLeftButtonDown({
 # Load the official 2024 ITBros logo into the WPF header and title bar.
 # A distinct file name prevents the previous white monitor logo from being reused.
 $sync["Form"].Add_Loaded({
-    $downloadUrl = "https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"
-    $destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02-v2.png"
+    $downloadUrl = "https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"
+    $destinationPath = Join-Path $env:TEMP "itbros-logo-white-asset-2024.png"
 
     if (-not (Test-Path -LiteralPath $destinationPath)) {
         try {
