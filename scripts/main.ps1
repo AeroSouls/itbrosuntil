@@ -215,6 +215,9 @@ $commonKeyEvents = {
         if ($_.SystemKey -eq "M") {
             Invoke-WPFButton "WPFTab5BT"
         }
+        if ($_.SystemKey -eq "S") {
+            Invoke-WPFButton "WPFTab6BT"
+        }
     }
     # shortcut for the filter box
     if ($_.Key -eq "F" -and $_.KeyboardDevice.Modifiers -eq "Ctrl") {
