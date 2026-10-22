@@ -48,4 +48,25 @@ Describe 'ITBros IP Scanner window XAML' {
         $match.Success | Should -Be $true
         { [xml]$match.Groups[1].Value } | Should -Not -Throw
     }
+
+    It 'loads an actual WPF scanner window on Windows' {
+        Add-Type -AssemblyName PresentationFramework
+        $source = Get-Content -LiteralPath "$PSScriptRoot/../functions/public/Invoke-WPFIPScanner.ps1" -Raw
+        $match = [regex]::Match($source, "(?s)\`$scannerXaml = @'\r?\n(.*?)\r?\n'@")
+        $match.Success | Should -Be $true
+        $reader = $null
+        $stringReader = $null
+        $window = $null
+        try {
+            $stringReader = New-Object System.IO.StringReader($match.Groups[1].Value)
+            $reader = [System.Xml.XmlReader]::Create($stringReader)
+            $window = [System.Windows.Markup.XamlReader]::Load($reader)
+            $window | Should -Not -BeNullOrEmpty
+        }
+        finally {
+            if ($window) { $window.Close() }
+            if ($reader) { $reader.Dispose() }
+            if ($stringReader) { $stringReader.Dispose() }
+        }
+    }
 }
