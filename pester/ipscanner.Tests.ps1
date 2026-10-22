@@ -40,3 +40,12 @@ Describe 'ITBros IP Scanner target parsing' {
         { Get-WPFScannerTargets -Target '10.0.0.12-10.0.0.10' } | Should -Throw
     }
 }
+
+Describe 'ITBros IP Scanner window XAML' {
+    It 'parses successfully with the required WPF XML namespaces' {
+        $source = Get-Content -LiteralPath "$PSScriptRoot/../functions/public/Invoke-WPFIPScanner.ps1" -Raw
+        $match = [regex]::Match($source, "(?s)\`$scannerXaml = @'\r?\n(.*?)\r?\n'@")
+        $match.Success | Should -Be $true
+        { [xml]$match.Groups[1].Value } | Should -Not -Throw
+    }
+}
