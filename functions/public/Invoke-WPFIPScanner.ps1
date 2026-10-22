@@ -73,6 +73,7 @@ function Invoke-WPFIPScanner {
 
     $scannerXaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ITBros | IP Scanner (Test)" Width="1050" Height="680"
         MinWidth="810" MinHeight="490" WindowStartupLocation="CenterOwner"
         Background="#101923" FontFamily="Segoe UI" FontSize="13">
