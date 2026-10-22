@@ -145,6 +145,8 @@ function Invoke-WPFIPScanner {
                                Foreground="#A6B8CA" FontSize="11" Margin="0,8,0,0"/>
                     <CheckBox Name="ScanPorts" Content="Check TCP ports on ping-responsive devices (80, 443, 445, 3389)"
                               Foreground="#D5E0EB" Margin="0,12,0,0" IsChecked="False"/>
+                    <CheckBox Name="ScanNetBIOS" Content="Try Windows/NetBIOS device names (slower)"
+                              Foreground="#BBD0E1" Margin="0,8,0,0" IsChecked="False"/>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <TextBlock Text="SHOW:" Foreground="#BECEDF" FontSize="11" FontWeight="Bold"
                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
@@ -267,6 +269,7 @@ function Invoke-WPFIPScanner {
         Target = $window.FindName('ScanTarget')
         Ports = $window.FindName('ScanPorts')
         Filter = $window.FindName('ScanFilter')
+        NetBIOS = $window.FindName('ScanNetBIOS')
         Start = $window.FindName('ScanStart')
         Stop = $window.FindName('ScanStop')
         Export = $window.FindName('ScanExport')
@@ -292,23 +295,67 @@ param(
     [Parameter(Mandatory=$true)][string]$ResultFile,
     [Parameter(Mandatory=$true)][string]$ProgressFile,
     [Parameter(Mandatory=$true)][string]$ErrorFile,
-    [switch]$ProbePorts
+    [switch]$ProbePorts,
+    [switch]$PrintersOnly,
+    [switch]$ResolveNetBIOS
 )
 $ErrorActionPreference = 'Stop'
+
+function Get-ScannerNetBIOSName {
+    param([string]$IP)
+    $exe = Join-Path $env:SystemRoot 'System32\nbtstat.exe'
+    if (-not (Test-Path -LiteralPath $exe)) { return $null }
+
+    $info = New-Object System.Diagnostics.ProcessStartInfo
+    $info.FileName = $exe
+    $info.Arguments = "-A $IP"
+    $info.CreateNoWindow = $true
+    $info.UseShellExecute = $false
+    $info.RedirectStandardOutput = $true
+    $proc = $null
+    try {
+        $proc = [System.Diagnostics.Process]::Start($info)
+        if (-not $proc.WaitForExit(850)) {
+            try { $proc.Kill() } catch {}
+            return $null
+        }
+        $result = $proc.StandardOutput.ReadToEnd()
+        $hit = [regex]::Match($result, '(?im)^\s*([^\s<>]{1,63})\s+<00>\s+UNIQUE\s+Registered')
+        if ($hit.Success) { return $hit.Groups[1].Value }
+    }
+    catch {}
+    finally { if ($proc) { $proc.Dispose() } }
+    return $null
+}
+
 try {
-    $addresses = @(Get-Content -LiteralPath $TargetFile)
+    # Use .NET file I/O to avoid Get-Content's extended PSPath/Value metadata.
+    $addresses = @([System.IO.File]::ReadAllLines($TargetFile))
     $count = $addresses.Count
-    [void](New-Item -ItemType File -Path $ResultFile -Force)
+    [System.IO.File]::WriteAllText($ResultFile, '')
+    $utf8 = [System.Text.UTF8Encoding]::new($false)
+    $dnsHint = '(?i)(printer|print|laserjet|officejet|deskjet|brother|xerox|ricoh|kyocera|lexmark|epson|canon|konica|zebra|sharp|bizhub)'
 
     for ($offset = 0; $offset -lt $count; $offset += 32) {
-        $end = [math]::Min($offset + 31, $count - 1)
-        $batch = @($addresses[$offset..$end])
+        $last = [math]::Min($offset + 31, $count - 1)
+        $batch = @($addresses[$offset..$last])
         $pings = @()
-        foreach ($address in $batch) {
+        foreach ($raw in $batch) {
+            # Restrict probes to valid IPv4 addresses, even if a stale target list contains metadata.
+            $match = [regex]::Match([string]$raw, '(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)')
+            if (-not $match.Success) { continue }
+            $ip = $match.Value
+            $ipObject = $null
+            if (-not [System.Net.IPAddress]::TryParse($ip, [ref]$ipObject)) { continue }
+            if ($ipObject.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { continue }
+
             $client = New-Object System.Net.NetworkInformation.Ping
             try {
-                $task = $client.SendPingAsync($address, 500)
-                $pings += [pscustomobject]@{ IP=$address; Client=$client; Task=$task; Alive=$false; Latency='-'; Ports=@() }
+                $task = $client.SendPingAsync($ip, 650)
+                $pings += [pscustomobject]@{
+                    IP=[string]$ip; Client=$client; Task=$task;
+                    Alive=$false; Latency='-'; Ports=@()
+                }
             }
             catch { $client.Dispose() }
         }
@@ -316,43 +363,44 @@ try {
         $pingTasks = @($pings | ForEach-Object { $_.Task })
         if ($pingTasks.Count) {
             try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]$pingTasks, 950) }
-            catch { } # Some ICMP probes can fault or time out.
+            catch {}
         }
-        foreach ($entry in $pings) {
+        foreach ($item in $pings) {
             try {
-                if ($entry.Task.IsCompleted -and -not $entry.Task.IsFaulted -and -not $entry.Task.IsCanceled -and
-                    $entry.Task.Result.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
-                    $entry.Alive = $true
-                    $entry.Latency = [string]$entry.Task.Result.RoundtripTime
+                if ($item.Task.IsCompleted -and -not $item.Task.IsFaulted -and
+                    -not $item.Task.IsCanceled -and
+                    $item.Task.Result.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
+                    $item.Alive = $true
+                    $item.Latency = [string]$item.Task.Result.RoundtripTime
                 }
             } catch {}
-            finally { $entry.Client.Dispose() }
+            finally { $item.Client.Dispose() }
         }
 
-        # Optional concurrent TCP discovery. A service can respond even when ICMP is blocked.
-        if ($ProbePorts) {
+        # Nothing other than a successful ICMP reply can mark a device as responsive.
+        $alive = @($pings | Where-Object { $_.Alive })
+        if ($alive.Count -gt 0 -and ($ProbePorts -or $PrintersOnly)) {
+            $portsToCheck = if ($PrintersOnly) { @(80,443,515,631,9100) } else { @(80,443,445,3389) }
             $checks = @()
-            foreach ($entry in $pings) {
-                foreach ($port in @(80,443,445,3389)) {
+            foreach ($item in $alive) {
+                foreach ($port in $portsToCheck) {
                     $tcp = New-Object System.Net.Sockets.TcpClient
                     try {
-                        $task = $tcp.ConnectAsync($entry.IP, $port)
-                        $checks += [pscustomobject]@{ Entry=$entry; Port=$port; Client=$tcp; Task=$task }
+                        $task = $tcp.ConnectAsync($item.IP, $port)
+                        $checks += [pscustomobject]@{ Entry=$item; Port=$port; Client=$tcp; Task=$task }
                     }
                     catch { $tcp.Dispose() }
                 }
             }
-            $tcpTasks = @($checks | ForEach-Object { $_.Task })
-            if ($tcpTasks.Count) {
-                try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]$tcpTasks, 700) }
-                catch { } # Closed ports can fault.
+            if ($checks.Count) {
+                try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]@($checks | ForEach-Object { $_.Task }), 750) }
+                catch {}
             }
             foreach ($check in $checks) {
                 try {
                     if ($check.Task.IsCompleted -and -not $check.Task.IsFaulted -and
                         -not $check.Task.IsCanceled -and $check.Client.Connected) {
-                        $check.Entry.Alive = $true
-                        $check.Entry.Ports += $check.Port
+                        $check.Entry.Ports += [int]$check.Port
                     }
                 }
                 catch {}
@@ -360,58 +408,67 @@ try {
             }
         }
 
-        $alive = @($pings | Where-Object { $_.Alive })
         $dnsQueries = @()
-        foreach ($entry in $alive) {
+        foreach ($item in $alive) {
             try {
-                $task = [System.Net.Dns]::GetHostEntryAsync($entry.IP)
-                $dnsQueries += [pscustomobject]@{ IP=$entry.IP; Task=$task }
+                $task = [System.Net.Dns]::GetHostEntryAsync([System.Net.IPAddress]::Parse($item.IP))
+                $dnsQueries += [pscustomobject]@{ IP=$item.IP; Task=$task }
             }
             catch {}
         }
-        $dnsTasks = @($dnsQueries | ForEach-Object { $_.Task })
-        if ($dnsTasks.Count) {
-            try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]$dnsTasks, 650) }
+        if ($dnsQueries.Count) {
+            try { [void][System.Threading.Tasks.Task]::WaitAll([System.Threading.Tasks.Task[]]@($dnsQueries | ForEach-Object { $_.Task }), 1800) }
             catch {}
         }
         $names = @{}
         foreach ($query in $dnsQueries) {
             try {
                 if ($query.Task.IsCompleted -and -not $query.Task.IsFaulted -and -not $query.Task.IsCanceled) {
-                    $names[$query.IP] = $query.Task.Result.HostName
+                    $hostname = [string]$query.Task.Result.HostName
+                    if ($hostname -and $hostname -ne $query.IP) { $names[$query.IP] = $hostname }
                 }
             } catch {}
         }
 
-        # Neighbor table normally contains MACs only for hosts on the same local L2 segment.
         $neighbors = @{}
         try {
             Get-NetNeighbor -AddressFamily IPv4 -ErrorAction Stop | ForEach-Object {
-                if ($_.LinkLayerAddress -and $_.LinkLayerAddress -ne '00-00-00-00-00-00') {
-                    $neighbors[$_.IPAddress] = $_.LinkLayerAddress
+                $mac = [string]$_.LinkLayerAddress
+                if ($mac -and $mac -ne '00-00-00-00-00-00') {
+                    $neighbors[[string]$_.IPAddress] = $mac
                 }
             }
         } catch {}
 
-        foreach ($entry in $alive) {
-            $hostname = if ($names.ContainsKey($entry.IP)) { $names[$entry.IP] } else { '-' }
-            $mac = if ($neighbors.ContainsKey($entry.IP)) { $neighbors[$entry.IP] } else { '-' }
-            $ports = if ($entry.Ports.Count) { ($entry.Ports | Sort-Object -Unique) -join ', ' } else { '-' }
-            $record = [pscustomobject]@{
-                IP = $entry.IP
-                Hostname = $hostname
-                Latency = $entry.Latency
-                MAC = $mac
-                Ports = $ports
+        foreach ($item in $alive) {
+            $hostname = if ($names.ContainsKey($item.IP)) { $names[$item.IP] } else { '-' }
+            if ($hostname -eq '-' -and $ResolveNetBIOS) {
+                $netbios = Get-ScannerNetBIOSName -IP $item.IP
+                if ($netbios) { $hostname = [string]$netbios }
             }
-            Add-Content -LiteralPath $ResultFile -Value ($record | ConvertTo-Json -Compress) -Encoding UTF8
+            $mac = if ($neighbors.ContainsKey($item.IP)) { $neighbors[$item.IP] } else { '-' }
+            $distinctPorts = @($item.Ports | Sort-Object -Unique)
+            $looksLikePrinter = (($distinctPorts | Where-Object { $_ -in @(515,631,9100) }).Count -gt 0) -or
+                                ($hostname -match $dnsHint)
+            if ($PrintersOnly -and -not $looksLikePrinter) { continue }
+
+            $record = [pscustomobject]@{
+                IP = [string]$item.IP
+                Hostname = [string]$hostname
+                DeviceType = if ($looksLikePrinter) { 'Likely printer' } else { 'Device' }
+                Latency = [string]$item.Latency
+                MAC = [string]$mac
+                Ports = if ($distinctPorts.Count) { $distinctPorts -join ', ' } else { '-' }
+            }
+            $line = ($record | ConvertTo-Json -Compress -Depth 3) + [Environment]::NewLine
+            [System.IO.File]::AppendAllText($ResultFile, $line, $utf8)
         }
 
-        Set-Content -LiteralPath $ProgressFile -Value ($end + 1) -Encoding Ascii
+        [System.IO.File]::WriteAllText($ProgressFile, [string]($last + 1))
     }
 }
 catch {
-    Set-Content -LiteralPath $ErrorFile -Value $_.Exception.Message -Encoding UTF8
+    try { [System.IO.File]::WriteAllText($ErrorFile, $_.Exception.Message) } catch {}
     exit 1
 }
 '@
