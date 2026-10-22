@@ -3965,15 +3965,11 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="182"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="#F6F7F9" CornerRadius="10" Width="64" Height="62" Margin="0,0,9,0" Padding="5">
-                                <Image Name="WPFIcon" Width="54" Height="52" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="ITBros" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
-                                <TextBlock Text="TECH TOOLKIT" Foreground="#ABBDCE" FontSize="9" FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </StackPanel>
+                        <!-- Single official logo: the source image already contains ITBros lettering. -->
+                        <Border Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                Background="#F6F7F9" CornerRadius="10" Width="152" Height="65" Padding="7">
+                            <Image Name="WPFIcon" Width="138" Height="51" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"/>
+                        </Border>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <ToggleButton Name="WPFTab6BT" Content="IT Support" Style="{StaticResource ModernNav}" Width="115" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab1BT" Content="Install" Style="{StaticResource ModernNav}" Width="76" Height="42" Margin="3,0" FontWeight="SemiBold"/>
@@ -8180,22 +8176,43 @@ $sync["Form"].Add_MouseLeftButtonDown({
     $sync["Form"].DragMove()
 })
 
-# setting window icon to make it look more professional
+# Load the official 2024 ITBros logo into the WPF header and title bar.
+# A distinct file name prevents the previous white monitor logo from being reused.
 $sync["Form"].Add_Loaded({
-   
     $downloadUrl = "https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"
-    $destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02.png"
-    
-    # Check if the file already exists
-    if (-not (Test-Path $destinationPath)) {
-        # File does not exist, download it
-        $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile($downloadUrl, $destinationPath)
-        Write-Output "File downloaded to: $destinationPath"
-    } else {
-        Write-Output "File already exists at: $destinationPath"
+    $destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02-v2.png"
+
+    if (-not (Test-Path -LiteralPath $destinationPath)) {
+        try {
+            $wc = New-Object System.Net.WebClient
+            try {
+                $wc.DownloadFile($downloadUrl, $destinationPath)
+            }
+            finally {
+                $wc.Dispose()
+            }
+        }
+        catch {
+            Write-Warning "Could not download the ITBros logo: $($_.Exception.Message)"
+        }
     }
-    $sync["Form"].Icon = $destinationPath
+
+    if (Test-Path -LiteralPath $destinationPath) {
+        try {
+            # Load the local image without a URI cache holding the old logo.
+            $logo = New-Object System.Windows.Media.Imaging.BitmapImage
+            $logo.BeginInit()
+            $logo.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+            $logo.UriSource = New-Object System.Uri($destinationPath)
+            $logo.EndInit()
+            $logo.Freeze()
+            $sync.WPFIcon.Source = $logo
+            $sync["Form"].Icon = $logo
+        }
+        catch {
+            Write-Warning "Could not load the ITBros logo: $($_.Exception.Message)"
+        }
+    }
 
     Try { 
         [Void][Window]
@@ -8302,19 +8319,6 @@ $sync["CheckboxFilter"].Add_TextChanged({
      }
 })
 
-
-$downloadUrl = "https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"
-$destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02.png"
-
-# Check if the file already exists
-if (-not (Test-Path $destinationPath)) {
-    # File does not exist, download it
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile($downloadUrl, $destinationPath)
-    Write-Output "File downloaded to: $destinationPath"
-} else {
-    Write-Output "File already exists at: $destinationPath"
-}
 
 # show current windowsd Product ID
 #Write-Host "Your Windows Product Key: $((Get-WmiObject -query 'select * from SoftwareLicensingService').OA3xOriginalProductKey)"
