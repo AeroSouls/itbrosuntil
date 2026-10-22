@@ -4017,7 +4017,6 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                                 <CheckBox Name="WPFInstallchromium" Content="Chromium" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalledge" Content="Edge" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallfirefox" Content="Firefox" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalltor" Content="Tor Browser" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalloperagx" Content="Opera GX" Margin="5,0"/>
 
 
@@ -5223,10 +5222,6 @@ $sync.configs.applications = '{
 	"WPFInstallthorium": {
 		"winget": "Alex313031.Thorium",
 		"choco": "na"
-	},
-	"WPFInstalltor": {
-		"Winget": "TorProject.TorBrowser",
-		"choco": "tor-browser"
 	},
 	"WPFInstalltreesize": {
 		"winget": "JAMSoftware.TreeSize.Free",
