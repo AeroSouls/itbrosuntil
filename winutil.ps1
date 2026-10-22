@@ -3966,7 +3966,9 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             <ColumnDefinition Width="182"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Image Name="WPFIcon" Width="56" Height="56" Margin="0,0,9,0" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"/>
+                            <Border Background="#F6F7F9" CornerRadius="10" Width="64" Height="62" Margin="0,0,9,0" Padding="5">
+                                <Image Name="WPFIcon" Width="54" Height="52" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"/>
+                            </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="ITBros" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
                                 <TextBlock Text="TECH TOOLKIT" Foreground="#ABBDCE" FontSize="9" FontWeight="SemiBold"/>
@@ -8181,8 +8183,8 @@ $sync["Form"].Add_MouseLeftButtonDown({
 # setting window icon to make it look more professional
 $sync["Form"].Add_Loaded({
    
-    $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-    $destinationPath = Join-Path $env:TEMP "itblogo.png"
+    $downloadUrl = "https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"
+    $destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02.png"
     
     # Check if the file already exists
     if (-not (Test-Path $destinationPath)) {
@@ -8301,8 +8303,8 @@ $sync["CheckboxFilter"].Add_TextChanged({
 })
 
 
-$downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-$destinationPath = Join-Path $env:TEMP "itblogo.png"
+$downloadUrl = "https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"
+$destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02.png"
 
 # Check if the file already exists
 if (-not (Test-Path $destinationPath)) {
