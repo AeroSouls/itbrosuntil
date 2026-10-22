@@ -9,7 +9,7 @@
 .NOTES
     Author         : AeroSouls
     GitHub         : https://github.com/AeroSouls
-    Version        : 2.5
+    Version        : 2.6
 #>
 
 Start-Transcript $ENV:TEMP\Winutil.log -Append
@@ -21,7 +21,7 @@ Add-Type -AssemblyName System.Windows.Forms
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
 $sync.PSScriptRoot = $PSScriptRoot
-$sync.version = "23.12.04"
+$sync.version = "26.10.22"
 $sync.configs = @{}
 $sync.ProcessRunning = $false
 
@@ -1802,6 +1802,104 @@ function Invoke-WPFButton {
         "WPFGetInstalledTweaks" {Invoke-WPFGetInstalled -CheckBox "tweaks"}
         "WPFGetIso" {Invoke-WPFGetIso}
         "WPFMicrowin" {Invoke-WPFMicrowin}
+        "WPFSup*" {Invoke-WPFSupportTool -Button $Button}
+    }
+}
+function Invoke-WPFSupportTool {
+    <#
+    .SYNOPSIS
+        Launches only the pre-defined ITBros support shortcuts.
+        Repair actions display a confirmation before launching.
+    #>
+    param([Parameter(Mandatory=$true)][string]$Button)
+
+    $actions = @{
+        'WPFSupControlPanel' = @{ File = 'control.exe' }
+        'WPFSupSettings' = @{ File = 'ms-settings:' }
+        'WPFSupDeviceManager' = @{ File = 'devmgmt.msc' }
+        'WPFSupComputerMgmt' = @{ File = 'compmgmt.msc' }
+        'WPFSupEventViewer' = @{ File = 'eventvwr.msc' }
+        'WPFSupServices' = @{ File = 'services.msc' }
+        'WPFSupTaskScheduler' = @{ File = 'taskschd.msc' }
+        'WPFSupTaskManager' = @{ File = 'taskmgr.exe' }
+        'WPFSupInstalledApps' = @{ File = 'control.exe'; Args = @('appwiz.cpl') }
+        'WPFSupSystemProperties' = @{ File = 'sysdm.cpl' }
+        'WPFSupSystemInfo' = @{ File = 'msinfo32.exe' }
+        'WPFSupReliability' = @{ File = 'perfmon.exe'; Args = @('/rel') }
+        'WPFSupPrinterSettings' = @{ File = 'ms-settings:printers' }
+        'WPFSupDevicesPrinters' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.DevicesAndPrinters') }
+        'WPFSupPrintManagement' = @{ File = 'printmanagement.msc' }
+        'WPFSupPrintServerProps' = @{ File = 'rundll32.exe'; Args = @('printui.dll,PrintUIEntry', '/s', '/t2') }
+        'WPFSupBluetooth' = @{ File = 'ms-settings:bluetooth' }
+        'WPFSupSound' = @{ File = 'control.exe'; Args = @('mmsys.cpl') }
+        'WPFSupRestartSpooler' = @{ File = 'cmd.exe'; Args = @('/k', 'net stop spooler && net start spooler'); Confirm = 'This interrupts printing on this computer. Restart the Print Spooler service?' }
+        'WPFSupNetworkAdapters' = @{ File = 'control.exe'; Args = @('ncpa.cpl') }
+        'WPFSupNetworkStatus' = @{ File = 'ms-settings:network-status' }
+        'WPFSupWifi' = @{ File = 'ms-settings:network-wifi' }
+        'WPFSupProxy' = @{ File = 'ms-settings:network-proxy' }
+        'WPFSupNetworkSharing' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.NetworkAndSharingCenter') }
+        'WPFSupFirewall' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.WindowsFirewall') }
+        'WPFSupAdvFirewall' = @{ File = 'wf.msc' }
+        'WPFSupIPConfig' = @{ File = 'cmd.exe'; Args = @('/k', 'ipconfig /all') }
+        'WPFSupNetstat' = @{ File = 'cmd.exe'; Args = @('/k', 'netstat -ano') }
+        'WPFSupDNSLookup' = @{ File = 'cmd.exe'; Args = @('/k', 'nslookup microsoft.com') }
+        'WPFSupUserAccounts' = @{ File = 'netplwiz.exe' }
+        'WPFSupLocalUsers' = @{ File = 'lusrmgr.msc' }
+        'WPFSupCredentials' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.CredentialManager') }
+        'WPFSupGroupPolicy' = @{ File = 'gpedit.msc' }
+        'WPFSupSecurityPolicy' = @{ File = 'secpol.msc' }
+        'WPFSupWinSecurity' = @{ File = 'windowsdefender:' }
+        'WPFSupStartupApps' = @{ File = 'ms-settings:startupapps' }
+        'WPFSupWinFeatures' = @{ File = 'optionalfeatures.exe' }
+        'WPFSupDiskManagement' = @{ File = 'diskmgmt.msc' }
+        'WPFSupDiskCleanup' = @{ File = 'cleanmgr.exe' }
+        'WPFSupStorage' = @{ File = 'ms-settings:storagesense' }
+        'WPFSupResourceMonitor' = @{ File = 'resmon.exe' }
+        'WPFSupPerfmon' = @{ File = 'perfmon.exe' }
+        'WPFSupWindowsUpdate' = @{ File = 'ms-settings:windowsupdate' }
+        'WPFSupTroubleshoot' = @{ File = 'ms-settings:troubleshoot' }
+        'WPFSupMsconfig' = @{ File = 'msconfig.exe' }
+        'WPFSupSfcScan' = @{ File = 'cmd.exe'; Args = @('/k', 'sfc /scannow'); Confirm = 'Run System File Checker? This can repair Windows system files and may take some time.' }
+        'WPFSupDismScan' = @{ File = 'cmd.exe'; Args = @('/k', 'DISM /Online /Cleanup-Image /ScanHealth'); Confirm = 'Run the DISM component store health scan? It can take some time.' }
+        'WPFSupDismRepair' = @{ File = 'cmd.exe'; Args = @('/k', 'DISM /Online /Cleanup-Image /RestoreHealth'); Confirm = 'Repair the Windows component store using DISM? This may take a long time and can use Windows Update.' }
+        'WPFSupFlushDNS' = @{ File = 'cmd.exe'; Args = @('/k', 'ipconfig /flushdns'); Confirm = 'Flush this computer''s DNS resolver cache?' }
+        'WPFSupWinsockReset' = @{ File = 'cmd.exe'; Args = @('/k', 'netsh winsock reset'); Confirm = 'Reset the Winsock catalog? Network services may be affected and a restart is normally required.' }
+        'WPFSupGPUpdate' = @{ File = 'cmd.exe'; Args = @('/k', 'gpupdate /force'); Confirm = 'Force a Group Policy refresh now? Managed settings may change.' }
+        'WPFSupWebsite' = @{ File = 'https://itbros.gg/' }
+        'WPFSupContact' = @{ File = 'https://itbros.gg/contact/' }
+        'WPFSupPortal' = @{ File = 'https://portal.itbros.gg/' }
+        'WPFSupRemoteSupport' = @{ File = 'https://itbrosrmm.screenconnect.com/' }
+        'WPFSupEmailSupport' = @{ File = 'mailto:support@itbros.gg' }
+        'WPFSupPasswordSender' = @{ File = 'https://pws.itbros.gg/' }
+    }
+
+    if (-not $actions.ContainsKey($Button)) { return }
+    $action = $actions[$Button]
+
+    if ($action.ContainsKey('Confirm')) {
+        $answer = [System.Windows.MessageBox]::Show(
+            $action.Confirm,
+            'ITBros LLC - Confirm repair action',
+            [System.Windows.MessageBoxButton]::YesNo,
+            [System.Windows.MessageBoxImage]::Warning
+        )
+        if ($answer -ne [System.Windows.MessageBoxResult]::Yes) { return }
+    }
+
+    try {
+        $params = @{ FilePath = $action.File; ErrorAction = 'Stop' }
+        if ($action.ContainsKey('Args')) {
+            $params.ArgumentList = $action.Args
+        }
+        Start-Process @params
+    }
+    catch {
+        [void][System.Windows.MessageBox]::Show(
+            "Unable to launch this tool. It may not be available on this Windows edition.`n`n$($_.Exception.Message)",
+            'ITBros LLC - IT Support',
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Error
+        )
     }
 }
 function Invoke-WPFControlPanel {
@@ -3887,6 +3985,14 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                             </TextBlock>
                         </ToggleButton.Content>
                     </ToggleButton>
+                    <ToggleButton HorizontalAlignment="Left" Height="40" Width="112"
+                        Background="{ButtonUpdatesBackgroundColor}" Foreground="{ButtonUpdatesForegroundColor}" FontWeight="Bold" Name="WPFTab6BT">
+                        <ToggleButton.Content>
+                            <TextBlock Background="Transparent" Foreground="{ButtonUpdatesForegroundColor}">
+                                IT <Underline>S</Underline>upport
+                            </TextBlock>
+                        </ToggleButton.Content>
+                    </ToggleButton>
                     <TextBox VerticalContentAlignment="Center" HorizontalAlignment="Right" Name="CheckboxFilter" ToolTip="Press Ctrl-F and type app name to filter application list below. Press Esc to reset the filter"
                         Height="25" Width="200" 
                         Foreground="{MainForegroundColor}" Background="{MainBackgroundColor}">Ctrl-F to filter</TextBox>
@@ -4392,6 +4498,116 @@ C:\drivers\
                                     </TextBlock>
                                </StackPanel>
                             </Border>
+                        </Grid>
+                    </TabItem>
+                    <!-- ITBros first-party support quick menu. All action names map to an explicit allowlist in Invoke-WPFSupportTool. -->
+                    <TabItem Header="IT Support" Visibility="Collapsed" Name="WPFTab6">
+                        <Grid Background="{MainBackgroundColor}" Margin="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="8,6,8,12">
+                                <TextBlock Text="ITBros LLC  |  IT Support Toolkit" FontSize="25" FontWeight="Bold" Foreground="{MainForegroundColor}"/>
+                                <TextBlock Text="Support: support@itbros.gg    |    Phone: (919) 907-2599    |    Web: itbros.gg"
+                                           Margin="0,5,0,0" FontSize="14" Foreground="{MainForegroundColor}"/>
+                                <TextBlock Text="Onsite IT support in Mebane, Burlington, Graham, Chapel Hill and nearby areas. Remote support across the U.S."
+                                           Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{MainForegroundColor}"/>
+                                <TextBlock Text="Shortcuts launch Windows tools. Repair options require confirmation. Some tools depend on your Windows edition."
+                                           Margin="0,5,0,0" TextWrapping="Wrap" Foreground="{MainForegroundColor}"/>
+                            </StackPanel>
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <GroupBox Header="Windows and System" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupControlPanel" Content="Control Panel" Height="36" Margin="4" Padding="7,4" ToolTip="Control Panel"/>
+                                <Button Name="WPFSupSettings" Content="Windows Settings" Height="36" Margin="4" Padding="7,4" ToolTip="Windows Settings"/>
+                                <Button Name="WPFSupDeviceManager" Content="Device Manager" Height="36" Margin="4" Padding="7,4" ToolTip="Device Manager"/>
+                                <Button Name="WPFSupComputerMgmt" Content="Computer Management" Height="36" Margin="4" Padding="7,4" ToolTip="Computer Management"/>
+                                <Button Name="WPFSupEventViewer" Content="Event Viewer" Height="36" Margin="4" Padding="7,4" ToolTip="Event Viewer"/>
+                                <Button Name="WPFSupServices" Content="Services" Height="36" Margin="4" Padding="7,4" ToolTip="Services"/>
+                                <Button Name="WPFSupTaskScheduler" Content="Task Scheduler" Height="36" Margin="4" Padding="7,4" ToolTip="Task Scheduler"/>
+                                <Button Name="WPFSupTaskManager" Content="Task Manager" Height="36" Margin="4" Padding="7,4" ToolTip="Task Manager"/>
+                                <Button Name="WPFSupInstalledApps" Content="Installed Programs" Height="36" Margin="4" Padding="7,4" ToolTip="Installed Programs"/>
+                                <Button Name="WPFSupSystemProperties" Content="System Properties" Height="36" Margin="4" Padding="7,4" ToolTip="System Properties"/>
+                                <Button Name="WPFSupSystemInfo" Content="System Information" Height="36" Margin="4" Padding="7,4" ToolTip="System Information"/>
+                                <Button Name="WPFSupReliability" Content="Reliability Monitor" Height="36" Margin="4" Padding="7,4" ToolTip="Reliability Monitor"/>
+                            </UniformGrid>
+                        </GroupBox>
+                        <GroupBox Header="Printers and Devices" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupPrinterSettings" Content="Printers and Scanners" Height="36" Margin="4" Padding="7,4" ToolTip="Printers and Scanners"/>
+                                <Button Name="WPFSupDevicesPrinters" Content="Devices and Printers" Height="36" Margin="4" Padding="7,4" ToolTip="Devices and Printers"/>
+                                <Button Name="WPFSupPrintManagement" Content="Print Management" Height="36" Margin="4" Padding="7,4" ToolTip="Print Management"/>
+                                <Button Name="WPFSupPrintServerProps" Content="Print Server Props" Height="36" Margin="4" Padding="7,4" ToolTip="Print Server Props"/>
+                                <Button Name="WPFSupBluetooth" Content="Bluetooth Settings" Height="36" Margin="4" Padding="7,4" ToolTip="Bluetooth Settings"/>
+                                <Button Name="WPFSupSound" Content="Sound Control Panel" Height="36" Margin="4" Padding="7,4" ToolTip="Sound Control Panel"/>
+                                <Button Name="WPFSupRestartSpooler" Content="Restart Spooler" Height="36" Margin="4" Padding="7,4" ToolTip="Restart Spooler"/>
+                            </UniformGrid>
+                        </GroupBox>
+                        <GroupBox Header="Network Troubleshooting" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupNetworkAdapters" Content="Network Adapters" Height="36" Margin="4" Padding="7,4" ToolTip="Network Adapters"/>
+                                <Button Name="WPFSupNetworkStatus" Content="Network Status" Height="36" Margin="4" Padding="7,4" ToolTip="Network Status"/>
+                                <Button Name="WPFSupWifi" Content="Wi-Fi Settings" Height="36" Margin="4" Padding="7,4" ToolTip="Wi-Fi Settings"/>
+                                <Button Name="WPFSupProxy" Content="Proxy Settings" Height="36" Margin="4" Padding="7,4" ToolTip="Proxy Settings"/>
+                                <Button Name="WPFSupNetworkSharing" Content="Network Sharing" Height="36" Margin="4" Padding="7,4" ToolTip="Network Sharing"/>
+                                <Button Name="WPFSupFirewall" Content="Windows Firewall" Height="36" Margin="4" Padding="7,4" ToolTip="Windows Firewall"/>
+                                <Button Name="WPFSupAdvFirewall" Content="Advanced Firewall" Height="36" Margin="4" Padding="7,4" ToolTip="Advanced Firewall"/>
+                                <Button Name="WPFSupIPConfig" Content="IP Configuration" Height="36" Margin="4" Padding="7,4" ToolTip="IP Configuration"/>
+                                <Button Name="WPFSupNetstat" Content="Active Connections" Height="36" Margin="4" Padding="7,4" ToolTip="Active Connections"/>
+                                <Button Name="WPFSupDNSLookup" Content="DNS Lookup" Height="36" Margin="4" Padding="7,4" ToolTip="DNS Lookup"/>
+                            </UniformGrid>
+                        </GroupBox>
+                        <GroupBox Header="Accounts and Security" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupUserAccounts" Content="User Accounts" Height="36" Margin="4" Padding="7,4" ToolTip="User Accounts"/>
+                                <Button Name="WPFSupLocalUsers" Content="Local Users" Height="36" Margin="4" Padding="7,4" ToolTip="Local Users"/>
+                                <Button Name="WPFSupCredentials" Content="Credential Manager" Height="36" Margin="4" Padding="7,4" ToolTip="Credential Manager"/>
+                                <Button Name="WPFSupGroupPolicy" Content="Group Policy Editor" Height="36" Margin="4" Padding="7,4" ToolTip="Group Policy Editor"/>
+                                <Button Name="WPFSupSecurityPolicy" Content="Local Security Policy" Height="36" Margin="4" Padding="7,4" ToolTip="Local Security Policy"/>
+                                <Button Name="WPFSupWinSecurity" Content="Windows Security" Height="36" Margin="4" Padding="7,4" ToolTip="Windows Security"/>
+                                <Button Name="WPFSupStartupApps" Content="Startup Apps" Height="36" Margin="4" Padding="7,4" ToolTip="Startup Apps"/>
+                                <Button Name="WPFSupWinFeatures" Content="Windows Features" Height="36" Margin="4" Padding="7,4" ToolTip="Windows Features"/>
+                            </UniformGrid>
+                        </GroupBox>
+                        <GroupBox Header="Diagnostics and Maintenance" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupDiskManagement" Content="Disk Management" Height="36" Margin="4" Padding="7,4" ToolTip="Disk Management"/>
+                                <Button Name="WPFSupDiskCleanup" Content="Disk Cleanup" Height="36" Margin="4" Padding="7,4" ToolTip="Disk Cleanup"/>
+                                <Button Name="WPFSupStorage" Content="Storage Settings" Height="36" Margin="4" Padding="7,4" ToolTip="Storage Settings"/>
+                                <Button Name="WPFSupResourceMonitor" Content="Resource Monitor" Height="36" Margin="4" Padding="7,4" ToolTip="Resource Monitor"/>
+                                <Button Name="WPFSupPerfmon" Content="Performance Monitor" Height="36" Margin="4" Padding="7,4" ToolTip="Performance Monitor"/>
+                                <Button Name="WPFSupWindowsUpdate" Content="Windows Update" Height="36" Margin="4" Padding="7,4" ToolTip="Windows Update"/>
+                                <Button Name="WPFSupTroubleshoot" Content="Troubleshoot Settings" Height="36" Margin="4" Padding="7,4" ToolTip="Troubleshoot Settings"/>
+                                <Button Name="WPFSupMsconfig" Content="System Configuration" Height="36" Margin="4" Padding="7,4" ToolTip="System Configuration"/>
+                            </UniformGrid>
+                        </GroupBox>
+                        <GroupBox Header="Repairs - Confirmation Required" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupSfcScan" Content="System File Check" Height="36" Margin="4" Padding="7,4" ToolTip="System File Check"/>
+                                <Button Name="WPFSupDismScan" Content="DISM Scan Health" Height="36" Margin="4" Padding="7,4" ToolTip="DISM Scan Health"/>
+                                <Button Name="WPFSupDismRepair" Content="DISM Restore Health" Height="36" Margin="4" Padding="7,4" ToolTip="DISM Restore Health"/>
+                                <Button Name="WPFSupFlushDNS" Content="Flush DNS Cache" Height="36" Margin="4" Padding="7,4" ToolTip="Flush DNS Cache"/>
+                                <Button Name="WPFSupWinsockReset" Content="Reset Winsock" Height="36" Margin="4" Padding="7,4" ToolTip="Reset Winsock"/>
+                                <Button Name="WPFSupGPUpdate" Content="Update Group Policy" Height="36" Margin="4" Padding="7,4" ToolTip="Update Group Policy"/>
+                            </UniformGrid>
+                        </GroupBox>
+                        <GroupBox Header="ITBros Support Resources" Foreground="{MainForegroundColor}" BorderBrush="{MainForegroundColor}" Width="344" Margin="6" Padding="6">
+                            <UniformGrid Columns="2">
+                                <Button Name="WPFSupWebsite" Content="ITBros Website" Height="36" Margin="4" Padding="7,4" ToolTip="ITBros Website"/>
+                                <Button Name="WPFSupContact" Content="Contact ITBros" Height="36" Margin="4" Padding="7,4" ToolTip="Contact ITBros"/>
+                                <Button Name="WPFSupPortal" Content="Client Portal" Height="36" Margin="4" Padding="7,4" ToolTip="Client Portal"/>
+                                <Button Name="WPFSupRemoteSupport" Content="Remote Support" Height="36" Margin="4" Padding="7,4" ToolTip="Remote Support"/>
+                                <Button Name="WPFSupEmailSupport" Content="Email Support" Height="36" Margin="4" Padding="7,4" ToolTip="Email Support"/>
+                                <Button Name="WPFSupPasswordSender" Content="Password Sender" Height="36" Margin="4" Padding="7,4" ToolTip="Password Sender"/>
+                            </UniformGrid>
+                        </GroupBox>
+                                </WrapPanel>
+                            </ScrollViewer>
+                            <TextBlock Grid.Row="2" Text="ITBros LLC  |  Managed IT, cybersecurity, cloud services, networking and website solutions  |  https://itbros.gg"
+                                       Foreground="{MainForegroundColor}" Margin="8,10,8,5" TextWrapping="Wrap"/>
                         </Grid>
                     </TabItem>
                 </TabControl>
@@ -7856,6 +8072,9 @@ $commonKeyEvents = {
         }
         if ($_.SystemKey -eq "M") {
             Invoke-WPFButton "WPFTab5BT"
+        }
+        if ($_.SystemKey -eq "S") {
+            Invoke-WPFButton "WPFTab6BT"
         }
     }
     # shortcut for the filter box
