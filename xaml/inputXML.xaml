@@ -515,7 +515,6 @@
                                 <CheckBox Name="WPFInstallchromium" Content="Chromium" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalledge" Content="Edge" Margin="5,0"/>
                                 <CheckBox Name="WPFInstallfirefox" Content="Firefox" Margin="5,0"/>
-                                <CheckBox Name="WPFInstalltor" Content="Tor Browser" Margin="5,0"/>
                                 <CheckBox Name="WPFInstalloperagx" Content="Opera GX" Margin="5,0"/>
 
 
