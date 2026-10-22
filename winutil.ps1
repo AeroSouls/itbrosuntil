@@ -3691,7 +3691,7 @@ function Invoke-WPFIPScanner {
     $xmlReader = $null
     $stringReader = $null
     try {
-        $stringReader = New-Object System.IO.StringReader($scannerXaml)
+        $stringReader = [System.IO.StringReader]::new($scannerXaml)
         $xmlReader = [System.Xml.XmlReader]::Create($stringReader)
         $window = [System.Windows.Markup.XamlReader]::Load($xmlReader)
     }
