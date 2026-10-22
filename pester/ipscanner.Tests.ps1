@@ -117,3 +117,18 @@ Describe 'IP Scanner ping and filtering safety' {
         $source | Should -Match '\-ResolveNetBIOS'
     }
 }
+
+Describe 'IP Scanner browser navigation' {
+    It 'uses the WPF event-args object rather than reserved PowerShell $args' {
+        $source = Get-Content -LiteralPath "$PSScriptRoot/../functions/public/Invoke-WPFIPScanner.ps1" -Raw
+        $source | Should -Match '\[System\.Windows\.Navigation\.RequestNavigateEventArgs\]\$eventArgs'
+        $source | Should -Match '\$eventArgs\.Handled\s*=\s*\$true'
+        $source | Should -Not -Match '\$args\.Handled\s*='
+    }
+
+    It 'uses Windows shell associations to launch web URLs in the default browser' {
+        $source = Get-Content -LiteralPath "$PSScriptRoot/../functions/public/Invoke-WPFIPScanner.ps1" -Raw
+        $source | Should -Match '\$startInfo\.UseShellExecute\s*=\s*\$true'
+        $source | Should -Match '\[System\.Diagnostics\.Process\]::Start\(\$startInfo\)'
+    }
+}
