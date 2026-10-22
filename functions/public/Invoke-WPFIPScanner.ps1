@@ -54,6 +54,50 @@ function Get-WPFScannerTargets {
     }
 }
 
+function Convert-WPFScannerResult {
+    <#
+    .SYNOPSIS
+        Normalizes one worker result for the table and safe, clickable web links.
+    #>
+    param([Parameter(Mandatory=$true)]$Row)
+
+    # Never display provider metadata or file paths as an IP address.
+    $ipMatch = [regex]::Match([string]$Row.IP, '(?<!\d)(?:\d{1,3}\.){3}\d{1,3}(?!\d)')
+    if (-not $ipMatch.Success) { return $null }
+    $ip = $ipMatch.Value
+    $parsed = $null
+    if (-not [System.Net.IPAddress]::TryParse($ip, [ref]$parsed)) { return $null }
+    if ($parsed.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { return $null }
+
+    $webLinks = New-Object 'System.Collections.Generic.List[object]'
+    $portString = [string]$Row.Ports
+    foreach ($port in @(80, 443, 631, 8080, 8443)) {
+        if ($portString -match "(^|,\s*)$port(\s*,|$)") {
+            $scheme = if ($port -in @(443,8443)) { 'https' } else { 'http' }
+            $uri = "$scheme" + "://$ip" + ":$port/"
+            $webLinks.Add([pscustomobject]@{
+                Label = [string]$port
+                Url = [System.Uri]::new($uri)
+            })
+        }
+    }
+
+    $name = [string]$Row.Hostname
+    if ([string]::IsNullOrWhiteSpace($name)) { $name = '-' }
+    $type = [string]$Row.DeviceType
+    if ([string]::IsNullOrWhiteSpace($type)) { $type = 'Device' }
+
+    [pscustomobject]@{
+        IP = [string]$ip
+        Hostname = $name
+        DeviceType = $type
+        Latency = [string]$Row.Latency
+        MAC = [string]$Row.MAC
+        Ports = if ($portString) { $portString } else { '-' }
+        WebLinks = @($webLinks.ToArray())
+    }
+}
+
 function Invoke-WPFIPScanner {
     <#
     .SYNOPSIS
@@ -289,6 +333,28 @@ function Invoke-WPFIPScanner {
     }
     $state.Results.ItemsSource = $state.Items
 
+    # Open only discovered HTTP(S) service URLs on an explicit user click.
+    $navigate = [System.Windows.Navigation.RequestNavigateEventHandler] {
+        param($sender, $args)
+        $uri = $args.Uri
+        $args.Handled = $true
+        if (-not $uri -or $uri.Scheme -notin @('http','https')) { return }
+        $address = $null
+        if (-not [System.Net.IPAddress]::TryParse($uri.Host, [ref]$address)) { return }
+        if ($address.AddressFamily -ne [System.Net.Sockets.AddressFamily]::InterNetwork) { return }
+        if ($uri.Port -notin @(80,443,631,8080,8443)) { return }
+        try { Start-Process -FilePath $uri.AbsoluteUri -ErrorAction Stop }
+        catch {
+            [void][System.Windows.MessageBox]::Show(
+                "Unable to open the web page: $($_.Exception.Message)",
+                'ITBros IP Scanner', 'OK', 'Warning'
+            )
+        }
+    }
+    $state.Results.AddHandler([System.Windows.Documents.Hyperlink]::RequestNavigateEvent, $navigate)
+
+
+
     $worker = @'
 param(
     [Parameter(Mandatory=$true)][string]$TargetFile,
@@ -473,82 +539,75 @@ catch {
 }
 '@
 
+    # Read plain lines, without PowerShell filesystem provider-added metadata.
+    $updateRows = {
+        if ([string]::IsNullOrWhiteSpace($state.ResultPath) -or
+            -not [System.IO.File]::Exists($state.ResultPath)) { return }
+        try {
+            $lines = [System.IO.File]::ReadAllLines($state.ResultPath)
+            while ($state.NextLine -lt $lines.Length) {
+                $line = [string]$lines[$state.NextLine]
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    try {
+                        $parsed = $line | ConvertFrom-Json -ErrorAction Stop
+                        $device = Convert-WPFScannerResult -Row $parsed
+                        if ($null -ne $device) { $state.Items.Add($device) }
+                    }
+                    catch { break } # Incomplete JSON line; read it on next tick.
+                }
+                $state.NextLine++
+            }
+            $state.Export.IsEnabled = ($state.Items.Count -gt 0)
+        }
+        catch {} # Transient file sharing during a write is normal.
+    }.GetNewClosure()
+
     $state.Timer = New-Object System.Windows.Threading.DispatcherTimer
     $state.Timer.Interval = [TimeSpan]::FromMilliseconds(350)
-
     $state.Timer.Add_Tick({
         if (-not $state.Process) { return }
-        try {
-            if ($state.ResultPath -and (Test-Path -LiteralPath $state.ResultPath)) {
-                $lines = @(Get-Content -LiteralPath $state.ResultPath -ErrorAction Stop)
-                while ($state.NextLine -lt $lines.Count) {
-                    try {
-                        $row = $lines[$state.NextLine] | ConvertFrom-Json -ErrorAction Stop
-                        $state.Items.Add([pscustomobject]@{
-                            IP = [string]$row.IP
-                            Hostname = [string]$row.Hostname
-                            Latency = [string]$row.Latency
-                            MAC = [string]$row.MAC
-                            Ports = [string]$row.Ports
-                        })
-                        $state.NextLine++
-                    }
-                    catch { break }  # A partially written line can be read on the next tick.
-                }
-                $state.Export.IsEnabled = ($state.Items.Count -gt 0)
-            }
-            $done = 0
-            if ($state.ProgressPath -and (Test-Path -LiteralPath $state.ProgressPath)) {
-                $value = Get-Content -LiteralPath $state.ProgressPath -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($value -match '^\d+$') { $done = [int]$value }
-            }
-            if ($state.Total -gt 0) {
-                $state.Progress.Value = [math]::Min(100, 100 * $done / $state.Total)
-            }
-            $state.Status.Text = "Scanned $done / $($state.Total) addresses | $($state.Items.Count) responding devices"
 
-            if ($state.Process.HasExited) {
-                $state.Timer.Stop()
-                # Read results one more time after the child process has exited.
-                if ($state.ResultPath -and (Test-Path -LiteralPath $state.ResultPath)) {
-                    $lines = @(Get-Content -LiteralPath $state.ResultPath -ErrorAction SilentlyContinue)
-                    while ($state.NextLine -lt $lines.Count) {
-                        try {
-                            $row = $lines[$state.NextLine] | ConvertFrom-Json -ErrorAction Stop
-                            $state.Items.Add([pscustomobject]@{
-                                IP=[string]$row.IP; Hostname=[string]$row.Hostname
-                                Latency=[string]$row.Latency; MAC=[string]$row.MAC; Ports=[string]$row.Ports
-                            })
-                        } catch {}
-                        $state.NextLine++
-                    }
-                }
-                $state.Start.IsEnabled = $true
-                $state.Stop.IsEnabled = $false
-                $state.Export.IsEnabled = ($state.Items.Count -gt 0)
-                if ($state.WasStopped) {
-                    $state.Status.Text = "Scan stopped | $($state.Items.Count) devices found"
-                }
-                elseif ($state.Process.ExitCode -ne 0) {
-                    $message = if (Test-Path -LiteralPath $state.ErrorPath) {
-                        (Get-Content -LiteralPath $state.ErrorPath -Raw).Trim()
-                    } else { "Scanner worker exited unexpectedly." }
-                    $state.Status.Text = "Scan failed: $message"
-                }
-                else {
-                    $state.Progress.Value = 100
-                    $state.Status.Text = "Scan complete | $($state.Items.Count) responding devices"
-                }
-                $state.Process.Dispose()
-                $state.Process = $null
-                if ($state.Folder -and (Test-Path -LiteralPath $state.Folder)) {
-                    Remove-Item -LiteralPath $state.Folder -Recurse -Force -ErrorAction SilentlyContinue
-                }
-            }
+        [void]$updateRows.Invoke()
+        $done = 0
+        if ($state.ProgressPath -and [System.IO.File]::Exists($state.ProgressPath)) {
+            try {
+                $value = [System.IO.File]::ReadAllText($state.ProgressPath).Trim()
+                if ($value -match '^\d+$') { $done = [int]$value }
+            } catch {}
         }
-        catch {
-            # A temporary file read conflict should not stop or orphan a running scan.
-            $state.Status.Text = "Updating scan results; retrying... $($_.Exception.Message)"
+
+        if ($state.Total -gt 0) {
+            $state.Progress.Value = [math]::Min(100, (100 * $done / $state.Total))
+        }
+        $state.Status.Text = "Scanned $done / $($state.Total) addresses | $($state.Items.Count) ping-responsive matches"
+
+        if (-not $state.Process.HasExited) { return }
+
+        $state.Timer.Stop()
+        [void]$updateRows.Invoke()
+        $state.Start.IsEnabled = $true
+        $state.Stop.IsEnabled = $false
+        $state.Export.IsEnabled = ($state.Items.Count -gt 0)
+
+        if ($state.WasStopped) {
+            $state.Status.Text = "Scan stopped | $($state.Items.Count) devices"
+        }
+        elseif ($state.Process.ExitCode -ne 0) {
+            $detail = 'Scanner worker exited unexpectedly.'
+            if ($state.ErrorPath -and [System.IO.File]::Exists($state.ErrorPath)) {
+                try { $detail = [System.IO.File]::ReadAllText($state.ErrorPath).Trim() } catch {}
+            }
+            $state.Status.Text = "Scan failed: $detail"
+        }
+        else {
+            $state.Progress.Value = 100
+            $state.Status.Text = "Scan complete | $($state.Items.Count) matching ping-responsive devices"
+        }
+
+        $state.Process.Dispose()
+        $state.Process = $null
+        if ($state.Folder -and [System.IO.Directory]::Exists($state.Folder)) {
+            try { [System.IO.Directory]::Delete($state.Folder, $true) } catch {}
         }
     }.GetNewClosure())
 
@@ -573,8 +632,9 @@ catch {
             $state.ResultPath = Join-Path $folder 'results.jsonl'
             $state.ProgressPath = Join-Path $folder 'progress.txt'
             $state.ErrorPath = Join-Path $folder 'error.txt'
-            $targets | Set-Content -LiteralPath $targetFile -Encoding Ascii
-            $worker | Set-Content -LiteralPath $workerFile -Encoding UTF8
+            $targetText = ((@($targets | ForEach-Object { [string]$_ }) -join [Environment]::NewLine) + [Environment]::NewLine)
+            [System.IO.File]::WriteAllText($targetFile, $targetText)
+            [System.IO.File]::WriteAllText($workerFile, $worker, [System.Text.UTF8Encoding]::new($false))
 
             $argsList = @(
                 '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass',
@@ -585,6 +645,8 @@ catch {
                 '-ErrorFile', ('"' + $state.ErrorPath + '"')
             )
             if ($state.Ports.IsChecked) { $argsList += '-ProbePorts' }
+            if ($state.Filter.SelectedIndex -eq 1) { $argsList += '-PrintersOnly' }
+            if ($state.NetBIOS.IsChecked) { $argsList += '-ResolveNetBIOS' }
             $powershellExe = Join-Path $PSHOME 'powershell.exe'
             $state.Process = Start-Process -FilePath $powershellExe -ArgumentList $argsList -PassThru -WindowStyle Hidden -ErrorAction Stop
 
@@ -620,7 +682,7 @@ catch {
         $dialog.FileName = 'ITBros-IPScan.csv'
         if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             try {
-                $state.Items | Select-Object IP, Hostname, Latency, MAC, Ports |
+                $state.Items | Select-Object IP, Hostname, DeviceType, Latency, MAC, Ports |
                     Export-Csv -LiteralPath $dialog.FileName -NoTypeInformation -Encoding UTF8
                 $state.Status.Text = "Exported $($state.Items.Count) devices to CSV."
             }
