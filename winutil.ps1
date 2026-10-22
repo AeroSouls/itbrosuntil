@@ -3958,18 +3958,18 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <Border Grid.Row="0" Background="#152331" BorderBrush="#304458" BorderThickness="0,0,0,1" Padding="16,12">
+                <Border Grid.Row="0" Background="#152331" BorderBrush="#314253" BorderThickness="0,0,0,1" Padding="19,7,19,7">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="189"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="182"/>
                         </Grid.ColumnDefinitions>
-                        <!-- Single official logo: the source image already contains ITBros lettering. -->
-                        <Border Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left"
-                                Background="#F6F7F9" CornerRadius="10" Width="152" Height="65" Padding="7">
-                            <Image Name="WPFIcon" Width="138" Height="51" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"/>
-                        </Border>
+                        <!-- Bundled white ITBros brand image; loaded from PowerShell at startup. -->
+                        <Image Grid.Column="0" Name="WPFIcon" Width="161" Height="105"
+                               Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               ToolTip="ITBros LLC" Source="https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <ToggleButton Name="WPFTab6BT" Content="IT Support" Style="{StaticResource ModernNav}" Width="115" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab1BT" Content="Install" Style="{StaticResource ModernNav}" Width="76" Height="42" Margin="3,0" FontWeight="SemiBold"/>
@@ -4496,10 +4496,10 @@ C:\drivers\
                                         <ColumnDefinition Width="315"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Margin="0,0,18,0">
-                                        <TextBlock Text="TECHNICIAN WORKSPACE" FontSize="11" Foreground="#F38B94" FontWeight="Bold"/>
-                                        <TextBlock Text="IT Support Toolkit" FontSize="26" FontWeight="SemiBold"
+                                        <TextBlock Text="YOUR TECHNICIAN WORKSPACE" FontSize="11" Foreground="#F38B94" FontWeight="Bold"/>
+                                        <TextBlock Text="IT Support Toolkit" FontSize="27" FontWeight="SemiBold"
                                                    Foreground="#FFFFFF" Margin="0,6,0,5"/>
-                                        <TextBlock Text="Windows administration and troubleshooting in one place."
+                                        <TextBlock Text="Everything you need for everyday Windows troubleshooting."
                                                    Foreground="#C1D0DF" FontSize="13" TextWrapping="Wrap"/>
                                         <TextBlock Text="support@itbros.gg  |  (919) 907-2599  |  itbros.gg"
                                                    Foreground="#B1C5D8" Margin="0,8,0,0" FontSize="12"/>
@@ -8179,8 +8179,8 @@ $sync["Form"].Add_MouseLeftButtonDown({
 # Load the official 2024 ITBros logo into the WPF header and title bar.
 # A distinct file name prevents the previous white monitor logo from being reused.
 $sync["Form"].Add_Loaded({
-    $downloadUrl = "https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"
-    $destinationPath = Join-Path $env:TEMP "itbros-logo-black-2024-02-v2.png"
+    $downloadUrl = "https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"
+    $destinationPath = Join-Path $env:TEMP "itbros-logo-white-asset-2024.png"
 
     if (-not (Test-Path -LiteralPath $destinationPath)) {
         try {
