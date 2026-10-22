@@ -161,11 +161,14 @@ $commonKeyEvents = {
 
     # Escape removes focus from the searchbox that way all shortcuts will start workinf again
     if ($_.Key -eq "Escape") {
-        if ($sync.CheckboxFilter.IsFocused)
-        {
-            $sync.CheckboxFilter.SelectAll()
+        if ($sync.WPFSupportSearch.IsFocused) {
+            $sync.WPFSupportSearch.Text = ""
+            $_.Handled = $true
+            return
+        }
+        if ($sync.CheckboxFilter.IsFocused) {
             $sync.CheckboxFilter.Text = ""
-            $sync.CheckboxFilter.Focus()
+            $_.Handled = $true
             return
         }
     }
@@ -215,14 +218,24 @@ $commonKeyEvents = {
         if ($_.SystemKey -eq "M") {
             Invoke-WPFButton "WPFTab5BT"
         }
-    }
-    # shortcut for the filter box
-    if ($_.Key -eq "F" -and $_.KeyboardDevice.Modifiers -eq "Ctrl") {
-        if ($sync.CheckboxFilter.Text -eq "Ctrl-F to filter") {
-            $sync.CheckboxFilter.SelectAll()
-            $sync.CheckboxFilter.Text = ""
+        if ($_.SystemKey -eq "S") {
+            Invoke-WPFButton "WPFTab6BT"
         }
-        $sync.CheckboxFilter.Focus()
+    }
+    # Ctrl+F searches the IT Support dashboard or switches to Install for application search.
+    if ($_.Key -eq "F" -and $_.KeyboardDevice.Modifiers -eq "Ctrl") {
+        if ($sync.WPFTab6.IsSelected) {
+            $sync.WPFSupportSearch.Focus()
+            $sync.WPFSupportSearch.SelectAll()
+        } else {
+            Invoke-WPFTab "WPFTab1BT"
+            if ($sync.CheckboxFilter.Text -eq "Ctrl-F to filter") {
+                $sync.CheckboxFilter.Text = ""
+            }
+            $sync.CheckboxFilter.Focus()
+            $sync.CheckboxFilter.SelectAll()
+        }
+        $_.Handled = $true
     }
 }
 $sync["Form"].Add_PreViewKeyDown($commonKeyEvents)
@@ -232,22 +245,43 @@ $sync["Form"].Add_MouseLeftButtonDown({
     $sync["Form"].DragMove()
 })
 
-# setting window icon to make it look more professional
+# Load the official 2024 ITBros logo into the WPF header and title bar.
+# A distinct file name prevents the previous white monitor logo from being reused.
 $sync["Form"].Add_Loaded({
-   
-    $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-    $destinationPath = Join-Path $env:TEMP "itblogo.png"
-    
-    # Check if the file already exists
-    if (-not (Test-Path $destinationPath)) {
-        # File does not exist, download it
-        $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile($downloadUrl, $destinationPath)
-        Write-Output "File downloaded to: $destinationPath"
-    } else {
-        Write-Output "File already exists at: $destinationPath"
+    $downloadUrl = "https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"
+    $destinationPath = Join-Path $env:TEMP "itbros-logo-white-asset-2024.png"
+
+    if (-not (Test-Path -LiteralPath $destinationPath)) {
+        try {
+            $wc = New-Object System.Net.WebClient
+            try {
+                $wc.DownloadFile($downloadUrl, $destinationPath)
+            }
+            finally {
+                $wc.Dispose()
+            }
+        }
+        catch {
+            Write-Warning "Could not download the ITBros logo: $($_.Exception.Message)"
+        }
     }
-    $sync["Form"].Icon = $destinationPath
+
+    if (Test-Path -LiteralPath $destinationPath) {
+        try {
+            # Load the local image without a URI cache holding the old logo.
+            $logo = New-Object System.Windows.Media.Imaging.BitmapImage
+            $logo.BeginInit()
+            $logo.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+            $logo.UriSource = [System.Uri]::new($destinationPath)
+            $logo.EndInit()
+            $logo.Freeze()
+            $sync.WPFIcon.Source = $logo
+            $sync["Form"].Icon = $logo
+        }
+        catch {
+            Write-Warning "Could not load the ITBros logo: $($_.Exception.Message)"
+        }
+    }
 
     Try { 
         [Void][Window]
@@ -288,8 +322,50 @@ $sync["Form"].Add_Loaded({
     
     # Move the window to that position...
     [Void][Window]::MoveWindow($windowHandle, $x, $y, $width, $height, $True)
-    Invoke-WPFTab "WPFTab1BT"
+    Invoke-WPFTab "WPFTab6BT"
     $sync["Form"].Focus()
+})
+
+# Search the IT Support tool cards without changing which actions they execute.
+$sync["WPFSupportSearch"].Add_GotFocus({
+    if ($sync.WPFSupportSearch.Text -eq "Search tools...") {
+        $sync.WPFSupportSearch.Text = ""
+    }
+})
+$sync["WPFSupportSearch"].Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($sync.WPFSupportSearch.Text)) {
+        $sync.WPFSupportSearch.Text = "Search tools..."
+    }
+})
+$sync["WPFSupportSearch"].Add_TextChanged({
+    $query = $sync.WPFSupportSearch.Text.Trim()
+    if ($query -eq "Search tools...") { $query = "" }
+
+    foreach ($cardId in @(
+        "WPFSupCardSystem", "WPFSupCardPrinters", "WPFSupCardNetwork",
+        "WPFSupCardSecurity", "WPFSupCardDiagnostics",
+        "WPFSupCardRepairs", "WPFSupCardResources"
+    )) {
+        $card = $sync[$cardId]
+        if ($null -eq $card) { continue }
+
+        # Card has a StackPanel containing a heading DockPanel and a UniformGrid of buttons.
+        $buttonGrid = $card.Child.Children[1]
+        $categoryMatch = $card.Tag.ToString().IndexOf(
+            $query, [System.StringComparison]::OrdinalIgnoreCase
+        ) -ge 0
+
+        $visible = 0
+        foreach ($button in $buttonGrid.Children) {
+            $nameMatch = $button.Content.ToString().IndexOf(
+                $query, [System.StringComparison]::OrdinalIgnoreCase
+            ) -ge 0
+            $show = ($query.Length -eq 0) -or $categoryMatch -or $nameMatch
+            $button.Visibility = if ($show) { "Visible" } else { "Collapsed" }
+            if ($show) { $visible++ }
+        }
+        $card.Visibility = if ($visible -gt 0) { "Visible" } else { "Collapsed" }
+    }
 })
 
 $sync["CheckboxFilter"].Add_TextChanged({
@@ -312,19 +388,6 @@ $sync["CheckboxFilter"].Add_TextChanged({
      }
 })
 
-
-$downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-$destinationPath = Join-Path $env:TEMP "itblogo.png"
-
-# Check if the file already exists
-if (-not (Test-Path $destinationPath)) {
-    # File does not exist, download it
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile($downloadUrl, $destinationPath)
-    Write-Output "File downloaded to: $destinationPath"
-} else {
-    Write-Output "File already exists at: $destinationPath"
-}
 
 # show current windowsd Product ID
 #Write-Host "Your Windows Product Key: $((Get-WmiObject -query 'select * from SoftwareLicensingService').OA3xOriginalProductKey)"

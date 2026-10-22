@@ -28,4 +28,9 @@ function Invoke-WPFTab {
             $sync.$tabNav.Items[$tabNumber].IsSelected = $true
         }
     }
+
+    # The top search box is specifically for application selection on Install.
+    if ($sync.ContainsKey("CheckboxFilter")) {
+        $sync.CheckboxFilter.Visibility = if ($ClickedTab -eq "WPFTab1BT") { "Visible" } else { "Collapsed" }
+    }
 }

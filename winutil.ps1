@@ -9,7 +9,7 @@
 .NOTES
     Author         : AeroSouls
     GitHub         : https://github.com/AeroSouls
-    Version        : 2.5
+    Version        : 2.6
 #>
 
 Start-Transcript $ENV:TEMP\Winutil.log -Append
@@ -21,7 +21,7 @@ Add-Type -AssemblyName System.Windows.Forms
 # Variable to sync between runspaces
 $sync = [Hashtable]::Synchronized(@{})
 $sync.PSScriptRoot = $PSScriptRoot
-$sync.version = "23.12.04"
+$sync.version = "26.10.22"
 $sync.configs = @{}
 $sync.ProcessRunning = $false
 
@@ -1802,6 +1802,104 @@ function Invoke-WPFButton {
         "WPFGetInstalledTweaks" {Invoke-WPFGetInstalled -CheckBox "tweaks"}
         "WPFGetIso" {Invoke-WPFGetIso}
         "WPFMicrowin" {Invoke-WPFMicrowin}
+        "WPFSup*" {Invoke-WPFSupportTool -Button $Button}
+    }
+}
+function Invoke-WPFSupportTool {
+    <#
+    .SYNOPSIS
+        Launches only the pre-defined ITBros support shortcuts.
+        Repair actions display a confirmation before launching.
+    #>
+    param([Parameter(Mandatory=$true)][string]$Button)
+
+    $actions = @{
+        'WPFSupControlPanel' = @{ File = 'control.exe' }
+        'WPFSupSettings' = @{ File = 'ms-settings:' }
+        'WPFSupDeviceManager' = @{ File = 'devmgmt.msc' }
+        'WPFSupComputerMgmt' = @{ File = 'compmgmt.msc' }
+        'WPFSupEventViewer' = @{ File = 'eventvwr.msc' }
+        'WPFSupServices' = @{ File = 'services.msc' }
+        'WPFSupTaskScheduler' = @{ File = 'taskschd.msc' }
+        'WPFSupTaskManager' = @{ File = 'taskmgr.exe' }
+        'WPFSupInstalledApps' = @{ File = 'control.exe'; Args = @('appwiz.cpl') }
+        'WPFSupSystemProperties' = @{ File = 'sysdm.cpl' }
+        'WPFSupSystemInfo' = @{ File = 'msinfo32.exe' }
+        'WPFSupReliability' = @{ File = 'perfmon.exe'; Args = @('/rel') }
+        'WPFSupPrinterSettings' = @{ File = 'ms-settings:printers' }
+        'WPFSupDevicesPrinters' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.DevicesAndPrinters') }
+        'WPFSupPrintManagement' = @{ File = 'printmanagement.msc' }
+        'WPFSupPrintServerProps' = @{ File = 'rundll32.exe'; Args = @('printui.dll,PrintUIEntry', '/s', '/t2') }
+        'WPFSupBluetooth' = @{ File = 'ms-settings:bluetooth' }
+        'WPFSupSound' = @{ File = 'control.exe'; Args = @('mmsys.cpl') }
+        'WPFSupRestartSpooler' = @{ File = 'cmd.exe'; Args = @('/k', 'net stop spooler && net start spooler'); Confirm = 'This interrupts printing on this computer. Restart the Print Spooler service?' }
+        'WPFSupNetworkAdapters' = @{ File = 'control.exe'; Args = @('ncpa.cpl') }
+        'WPFSupNetworkStatus' = @{ File = 'ms-settings:network-status' }
+        'WPFSupWifi' = @{ File = 'ms-settings:network-wifi' }
+        'WPFSupProxy' = @{ File = 'ms-settings:network-proxy' }
+        'WPFSupNetworkSharing' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.NetworkAndSharingCenter') }
+        'WPFSupFirewall' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.WindowsFirewall') }
+        'WPFSupAdvFirewall' = @{ File = 'wf.msc' }
+        'WPFSupIPConfig' = @{ File = 'cmd.exe'; Args = @('/k', 'ipconfig /all') }
+        'WPFSupNetstat' = @{ File = 'cmd.exe'; Args = @('/k', 'netstat -ano') }
+        'WPFSupDNSLookup' = @{ File = 'cmd.exe'; Args = @('/k', 'nslookup microsoft.com') }
+        'WPFSupUserAccounts' = @{ File = 'netplwiz.exe' }
+        'WPFSupLocalUsers' = @{ File = 'lusrmgr.msc' }
+        'WPFSupCredentials' = @{ File = 'control.exe'; Args = @('/name', 'Microsoft.CredentialManager') }
+        'WPFSupGroupPolicy' = @{ File = 'gpedit.msc' }
+        'WPFSupSecurityPolicy' = @{ File = 'secpol.msc' }
+        'WPFSupWinSecurity' = @{ File = 'windowsdefender:' }
+        'WPFSupStartupApps' = @{ File = 'ms-settings:startupapps' }
+        'WPFSupWinFeatures' = @{ File = 'optionalfeatures.exe' }
+        'WPFSupDiskManagement' = @{ File = 'diskmgmt.msc' }
+        'WPFSupDiskCleanup' = @{ File = 'cleanmgr.exe' }
+        'WPFSupStorage' = @{ File = 'ms-settings:storagesense' }
+        'WPFSupResourceMonitor' = @{ File = 'resmon.exe' }
+        'WPFSupPerfmon' = @{ File = 'perfmon.exe' }
+        'WPFSupWindowsUpdate' = @{ File = 'ms-settings:windowsupdate' }
+        'WPFSupTroubleshoot' = @{ File = 'ms-settings:troubleshoot' }
+        'WPFSupMsconfig' = @{ File = 'msconfig.exe' }
+        'WPFSupSfcScan' = @{ File = 'cmd.exe'; Args = @('/k', 'sfc /scannow'); Confirm = 'Run System File Checker? This can repair Windows system files and may take some time.' }
+        'WPFSupDismScan' = @{ File = 'cmd.exe'; Args = @('/k', 'DISM /Online /Cleanup-Image /ScanHealth'); Confirm = 'Run the DISM component store health scan? It can take some time.' }
+        'WPFSupDismRepair' = @{ File = 'cmd.exe'; Args = @('/k', 'DISM /Online /Cleanup-Image /RestoreHealth'); Confirm = 'Repair the Windows component store using DISM? This may take a long time and can use Windows Update.' }
+        'WPFSupFlushDNS' = @{ File = 'cmd.exe'; Args = @('/k', 'ipconfig /flushdns'); Confirm = 'Flush this computer''s DNS resolver cache?' }
+        'WPFSupWinsockReset' = @{ File = 'cmd.exe'; Args = @('/k', 'netsh winsock reset'); Confirm = 'Reset the Winsock catalog? Network services may be affected and a restart is normally required.' }
+        'WPFSupGPUpdate' = @{ File = 'cmd.exe'; Args = @('/k', 'gpupdate /force'); Confirm = 'Force a Group Policy refresh now? Managed settings may change.' }
+        'WPFSupWebsite' = @{ File = 'https://itbros.gg/' }
+        'WPFSupContact' = @{ File = 'https://itbros.gg/contact/' }
+        'WPFSupPortal' = @{ File = 'https://portal.itbros.gg/' }
+        'WPFSupRemoteSupport' = @{ File = 'https://itbrosrmm.screenconnect.com/' }
+        'WPFSupEmailSupport' = @{ File = 'mailto:support@itbros.gg' }
+        'WPFSupPasswordSender' = @{ File = 'https://pws.itbros.gg/' }
+    }
+
+    if (-not $actions.ContainsKey($Button)) { return }
+    $action = $actions[$Button]
+
+    if ($action.ContainsKey('Confirm')) {
+        $answer = [System.Windows.MessageBox]::Show(
+            $action.Confirm,
+            'ITBros LLC - Confirm repair action',
+            [System.Windows.MessageBoxButton]::YesNo,
+            [System.Windows.MessageBoxImage]::Warning
+        )
+        if ($answer -ne [System.Windows.MessageBoxResult]::Yes) { return }
+    }
+
+    try {
+        $params = @{ FilePath = $action.File; ErrorAction = 'Stop' }
+        if ($action.ContainsKey('Args')) {
+            $params.ArgumentList = $action.Args
+        }
+        Start-Process @params
+    }
+    catch {
+        [void][System.Windows.MessageBox]::Show(
+            "Unable to launch this tool. It may not be available on this Windows edition.`n`n$($_.Exception.Message)",
+            'ITBros LLC - IT Support',
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Error
+        )
     }
 }
 function Invoke-WPFControlPanel {
@@ -2858,7 +2956,13 @@ function Invoke-WPFTab {
             $sync.$tabNav.Items[$tabNumber].IsSelected = $true
         }
     }
+
+    # The top search box is specifically for application selection on Install.
+    if ($sync.ContainsKey("CheckboxFilter")) {
+        $sync.CheckboxFilter.Visibility = if ($ClickedTab -eq "WPFTab1BT") { "Visible" } else { "Collapsed" }
+    }
 }
+
 function Invoke-WPFToggle {
 
     <#
@@ -3405,7 +3509,7 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
         mc:Ignorable="d"
         Background="{MainBackgroundColor}"
         WindowStartupLocation="CenterScreen"
-        Title="ITBros Windows Utility" Height="800" Width="1200">
+        Title="ITBros | Technician Utility" Height="830" Width="1240" MinWidth="1090" MinHeight="640" FontFamily="Segoe UI" FontSize="13">
 
     <Window.Resources>
     <!--Scrollbar Thumbs-->
@@ -3535,95 +3639,104 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
         <!-- TextBlock template -->
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="{LabelboxForegroundColor}"/>
-            <Setter Property="Background" Value="{LabelBackgroundColor}"/>
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
-        <!-- Toggle button template x:Key="TabToggleButton" -->
-        <Style TargetType="{x:Type ToggleButton}">
-            <Setter Property="Margin" Value="{ButtonMargin}"/>
-            <Setter Property="Content" Value=""/>
+        <!-- Modern navigation: subtle by default, red when active -->
+        <Style x:Key="ModernNav" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="#E1E9F3"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Grid>
-                            <Border x:Name="ButtonGlow" 
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{ButtonForegroundColor}"
-                                        BorderThickness="{ButtonBorderThickness}"
-                                        CornerRadius="{ButtonCornerRadius}">
-                                <Grid>
-                                    <Border x:Name="BackgroundBorder"
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{ButtonBackgroundColor}"
-                                        BorderThickness="{ButtonBorderThickness}"
-                                        CornerRadius="{ButtonCornerRadius}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,2,10,2"/>
-                                    </Border>
-                                </Grid>
-                            </Border>
-                        </Grid>
+                        <Border x:Name="Surface" CornerRadius="9" Background="{TemplateBinding Background}" Padding="10,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BackgroundBorder" Property="Background" Value="{ButtonBackgroundMouseoverColor}"/>
-                                <Setter Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Opacity="1" ShadowDepth="5" Color="Gold" Direction="-100" BlurRadius="45"/>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter Property="Panel.ZIndex" Value="2000"/>
+                                <Setter TargetName="Surface" Property="Background" Value="#304255"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter Property="BorderBrush" Value="Pink"/>
-                                <Setter Property="BorderThickness" Value="2"/>
-                                <Setter TargetName="BackgroundBorder" Property="Background" Value="{ButtonBackgroundSelectedColor}"/>
-                                <Setter Property="Effect">
-                                    <Setter.Value>
-                                        <DropShadowEffect Opacity="1" ShadowDepth="2" Color="Gold" Direction="-111" BlurRadius="25"/>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger>
-                            <Trigger Property="IsChecked" Value="False">
-                                <Setter Property="BorderBrush" Value="Transparent"/>
-                                <Setter Property="BorderThickness" Value="{ButtonBorderThickness}"/>
+                                <Setter TargetName="Surface" Property="Background" Value="#AE3641"/>
+                                <Setter Property="Foreground" Value="White"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Button Template -->
-        <Style TargetType="Button">
-            <Setter Property="Margin" Value="{ButtonMargin}"/>
-            <Setter Property="Foreground" Value="{ButtonForegroundColor}"/>
-            <Setter Property="Background" Value="{ButtonBackgroundColor}"/>
-
+        <Style x:Key="ModernSupportButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#EBF1F9"/>
+            <Setter Property="Background" Value="#25364B"/>
+            <Setter Property="BorderBrush" Value="#3B5066"/>
+            <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Grid>
-                            <Border x:Name="BackgroundBorder"
-                                    Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{ButtonBorderThickness}"
-                                    CornerRadius="{ButtonCornerRadius}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,2,10,2"/>
-                            </Border>
-                        </Grid>
+                        <Border x:Name="Surface" CornerRadius="8" Padding="8,4" BorderThickness="1"
+                                Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="BackgroundBorder" Property="Background" Value="{ButtonBackgroundPressedColor}"/>
-                            </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="BackgroundBorder" Property="Background" Value="{ButtonBackgroundMouseoverColor}"/>
+                                <Setter TargetName="Surface" Property="Background" Value="#3A546F"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#728DA7"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#AE3641"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="BackgroundBorder" Property="Background" Value="{ButtonBackgroundSelectedColor}"/>
-                                <Setter Property="Foreground" Value="DimGray"/>
+                                <Setter Property="Opacity" Value="0.5"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="ModernSearch" TargetType="TextBox">
+            <Setter Property="Foreground" Value="#EEF4FA"/>
+            <Setter Property="CaretBrush" Value="#FF8089"/>
+            <Setter Property="Background" Value="#203044"/>
+            <Setter Property="BorderBrush" Value="#536B84"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <!-- Global button styling for Install, Tweaks, Config, Updates and MicroWin -->
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Foreground" Value="{ButtonForegroundColor}"/>
+            <Setter Property="Background" Value="{ButtonBackgroundColor}"/>
+            <Setter Property="BorderBrush" Value="#394E62"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="MinHeight" Value="31"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="8" Padding="8,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="{ButtonBackgroundMouseoverColor}"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#68849B"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="{ButtonBackgroundPressedColor}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ToggleButton}" BasedOn="{StaticResource ModernNav}"/>
         <!-- Checkbox template -->
         <Style TargetType="CheckBox">
             <Setter Property="Foreground" Value="{MainForegroundColor}"/>
@@ -3839,60 +3952,38 @@ $inputXML = '<Window x:Class="WinUtility.MainWindow"
     <Border Name="WPFdummy" Grid.Column="0" Grid.Row="1">
             <Grid Background="{MainBackgroundColor}" ShowGridLines="False" Name="WPFMainGrid"  Width="Auto" Height="Auto">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height=".1*"/>
-                    <RowDefinition Height=".9*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <DockPanel Background="{MainBackgroundColor}" SnapsToDevicePixels="True" Grid.Row="0" Width="1100">
-                     <Image Height="100" Width="100" Name="WPFIcon" SnapsToDevicePixels="True" Source="https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png" Margin="0,10,20,10"/>
-                    <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
-                        Background="{ButtonInstallBackgroundColor}" Foreground="white" FontWeight="Bold" Name="WPFTab1BT">
-                        <ToggleButton.Content>
-                            <TextBlock Background="Transparent" Foreground="{ButtonInstallForegroundColor}" >
-                                <Underline>I</Underline>nstall
-                            </TextBlock>
-                        </ToggleButton.Content>
-                    </ToggleButton>
-                    <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
-                        Background="{ButtonTweaksBackgroundColor}" Foreground="{ButtonTweaksForegroundColor}" FontWeight="Bold" Name="WPFTab2BT">
-                        <ToggleButton.Content>
-                            <TextBlock Background="Transparent" Foreground="{ButtonTweaksForegroundColor}">
-                                <Underline>T</Underline>weaks
-                            </TextBlock>
-                        </ToggleButton.Content>
-                    </ToggleButton>
-                    <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
-                        Background="{ButtonConfigBackgroundColor}" Foreground="{ButtonConfigForegroundColor}" FontWeight="Bold" Name="WPFTab3BT">
-                        <ToggleButton.Content>
-                            <TextBlock Background="Transparent" Foreground="{ButtonConfigForegroundColor}">
-                                <Underline>C</Underline>onfig
-                            </TextBlock>
-                        </ToggleButton.Content>
-                    </ToggleButton>
-                    <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
-                        Background="{ButtonUpdatesBackgroundColor}" Foreground="{ButtonUpdatesForegroundColor}" FontWeight="Bold" Name="WPFTab4BT">
-                        <ToggleButton.Content>
-                            <TextBlock Background="Transparent" Foreground="{ButtonUpdatesForegroundColor}">
-                                <Underline>U</Underline>pdates
-                            </TextBlock>
-                        </ToggleButton.Content>
-                    </ToggleButton>
-                    <ToggleButton HorizontalAlignment="Left" Height="40" Width="100"
-                        Background="{ButtonUpdatesBackgroundColor}" Foreground="{ButtonUpdatesForegroundColor}" FontWeight="Bold" Name="WPFTab5BT">
-                        <ToggleButton.Content>
-                            <TextBlock Background="Transparent" Foreground="{ButtonUpdatesForegroundColor}">
-                                <Underline>M</Underline>icroWin
-                            </TextBlock>
-                        </ToggleButton.Content>
-                    </ToggleButton>
-                    <TextBox VerticalContentAlignment="Center" HorizontalAlignment="Right" Name="CheckboxFilter" ToolTip="Press Ctrl-F and type app name to filter application list below. Press Esc to reset the filter"
-                        Height="25" Width="200" 
-                        Foreground="{MainForegroundColor}" Background="{MainBackgroundColor}">Ctrl-F to filter</TextBox>
-                </DockPanel>
-                <ScrollViewer Grid.Row="1" Padding="-1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" Background="Transparent">
-                <TabControl Name="WPFTabNav" Background="#222222" Width="Auto" Height="Auto">
+                <Border Grid.Row="0" Background="#152331" BorderBrush="#314253" BorderThickness="0,0,0,1" Padding="19,7,19,7">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="189"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="182"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Bundled white ITBros brand image; loaded from PowerShell at startup. -->
+                        <Image Grid.Column="0" Name="WPFIcon" Width="161" Height="105"
+                               Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Left"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               ToolTip="ITBros LLC" Source="https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <ToggleButton Name="WPFTab6BT" Content="IT Support" Style="{StaticResource ModernNav}" Width="115" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            <ToggleButton Name="WPFTab1BT" Content="Install" Style="{StaticResource ModernNav}" Width="76" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            <ToggleButton Name="WPFTab2BT" Content="Tweaks" Style="{StaticResource ModernNav}" Width="80" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            <ToggleButton Name="WPFTab3BT" Content="Config" Style="{StaticResource ModernNav}" Width="77" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            <ToggleButton Name="WPFTab4BT" Content="Updates" Style="{StaticResource ModernNav}" Width="86" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                            <ToggleButton Name="WPFTab5BT" Content="MicroWin" Style="{StaticResource ModernNav}" Width="92" Height="42" Margin="3,0" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <TextBox Grid.Column="2" Name="CheckboxFilter" Text="Ctrl-F to filter" Visibility="Collapsed" Height="38" Width="178"
+                                 Style="{StaticResource ModernSearch}" ToolTip="Search applications on the Install tab (Ctrl+F)"/>
+                    </Grid>
+                </Border>
+                <ScrollViewer Grid.Row="1" Padding="-1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
+                <TabControl Name="WPFTabNav" Background="{MainBackgroundColor}" Width="Auto" Height="Auto" SelectedIndex="5">
                     <TabItem Header="Install" Visibility="Collapsed" Name="WPFTab1">
                         <Grid Background="Transparent">
                             <Grid.ColumnDefinitions>
@@ -4393,6 +4484,203 @@ C:\drivers\
                                </StackPanel>
                             </Border>
                         </Grid>
+                    </TabItem>
+                    <!-- Modern IT Support dashboard: search and two-column categories -->
+                    <TabItem Header="IT Support" Visibility="Collapsed" Name="WPFTab6">
+                        <StackPanel Background="{MainBackgroundColor}" Margin="20,18,20,22">
+                            <Border Background="#1E3043" BorderBrush="#405671" BorderThickness="1"
+                                    CornerRadius="14" Padding="22,19" Margin="0,0,0,14">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="315"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,18,0">
+                                        <TextBlock Text="YOUR TECHNICIAN WORKSPACE" FontSize="11" Foreground="#F38B94" FontWeight="Bold"/>
+                                        <TextBlock Text="IT Support Toolkit" FontSize="27" FontWeight="SemiBold"
+                                                   Foreground="#FFFFFF" Margin="0,6,0,5"/>
+                                        <TextBlock Text="Everything you need for everyday Windows troubleshooting."
+                                                   Foreground="#C1D0DF" FontSize="13" TextWrapping="Wrap"/>
+                                        <TextBlock Text="support@itbros.gg  |  (919) 907-2599  |  itbros.gg"
+                                                   Foreground="#B1C5D8" Margin="0,8,0,0" FontSize="12"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="SEARCH 57 TOOLS" Foreground="#E5ECF5" FontWeight="Bold"
+                                                   FontSize="11" Margin="1,0,0,7"/>
+                                        <TextBox Name="WPFSupportSearch" Height="42" Style="{StaticResource ModernSearch}"
+                                                 Text="Search tools..." ToolTip="Search tool names or categories"/>
+                                        <TextBlock Text="e.g. printer, firewall, event viewer, DISM"
+                                                   Foreground="#AFC0D1" FontSize="11" Margin="2,6,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                <Border Name="WPFSupCardSystem" Tag="Windows and System"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="Windows and System" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="12 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupControlPanel" Content="Control Panel" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Control Panel"/>
+                                    <Button Name="WPFSupSettings" Content="Windows Settings" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Windows Settings"/>
+                                    <Button Name="WPFSupDeviceManager" Content="Device Manager" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Device Manager"/>
+                                    <Button Name="WPFSupComputerMgmt" Content="Computer Management" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Computer Management"/>
+                                    <Button Name="WPFSupEventViewer" Content="Event Viewer" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Event Viewer"/>
+                                    <Button Name="WPFSupServices" Content="Services" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Services"/>
+                                    <Button Name="WPFSupTaskScheduler" Content="Task Scheduler" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Task Scheduler"/>
+                                    <Button Name="WPFSupTaskManager" Content="Task Manager" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Task Manager"/>
+                                    <Button Name="WPFSupInstalledApps" Content="Installed Programs" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Installed Programs"/>
+                                    <Button Name="WPFSupSystemProperties" Content="System Properties" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="System Properties"/>
+                                    <Button Name="WPFSupSystemInfo" Content="System Information" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="System Information"/>
+                                    <Button Name="WPFSupReliability" Content="Reliability Monitor" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Reliability Monitor"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border Name="WPFSupCardNetwork" Tag="Network Troubleshooting"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="Network Troubleshooting" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="10 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupNetworkAdapters" Content="Network Adapters" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Network Adapters"/>
+                                    <Button Name="WPFSupNetworkStatus" Content="Network Status" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Network Status"/>
+                                    <Button Name="WPFSupWifi" Content="Wi-Fi Settings" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Wi-Fi Settings"/>
+                                    <Button Name="WPFSupProxy" Content="Proxy Settings" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Proxy Settings"/>
+                                    <Button Name="WPFSupNetworkSharing" Content="Network Sharing" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Network Sharing"/>
+                                    <Button Name="WPFSupFirewall" Content="Windows Firewall" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Windows Firewall"/>
+                                    <Button Name="WPFSupAdvFirewall" Content="Advanced Firewall" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Advanced Firewall"/>
+                                    <Button Name="WPFSupIPConfig" Content="IP Configuration" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="IP Configuration"/>
+                                    <Button Name="WPFSupNetstat" Content="Active Connections" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Active Connections"/>
+                                    <Button Name="WPFSupDNSLookup" Content="DNS Lookup" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="DNS Lookup"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border Name="WPFSupCardRepairs" Tag="Repairs - Confirmation Required"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="Repairs - Confirmation Required" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="6 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupSfcScan" Content="System File Check" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="System File Check"/>
+                                    <Button Name="WPFSupDismScan" Content="DISM Scan Health" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="DISM Scan Health"/>
+                                    <Button Name="WPFSupDismRepair" Content="DISM Restore Health" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="DISM Restore Health"/>
+                                    <Button Name="WPFSupFlushDNS" Content="Flush DNS Cache" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Flush DNS Cache"/>
+                                    <Button Name="WPFSupWinsockReset" Content="Reset Winsock" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Reset Winsock"/>
+                                    <Button Name="WPFSupGPUpdate" Content="Update Group Policy" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Update Group Policy"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                <Border Name="WPFSupCardPrinters" Tag="Printers and Devices"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="Printers and Devices" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="7 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupPrinterSettings" Content="Printers and Scanners" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Printers and Scanners"/>
+                                    <Button Name="WPFSupDevicesPrinters" Content="Devices and Printers" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Devices and Printers"/>
+                                    <Button Name="WPFSupPrintManagement" Content="Print Management" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Print Management"/>
+                                    <Button Name="WPFSupPrintServerProps" Content="Print Server Props" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Print Server Props"/>
+                                    <Button Name="WPFSupBluetooth" Content="Bluetooth Settings" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Bluetooth Settings"/>
+                                    <Button Name="WPFSupSound" Content="Sound Control Panel" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Sound Control Panel"/>
+                                    <Button Name="WPFSupRestartSpooler" Content="Restart Spooler" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Restart Spooler"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border Name="WPFSupCardSecurity" Tag="Accounts and Security"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="Accounts and Security" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="8 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupUserAccounts" Content="User Accounts" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="User Accounts"/>
+                                    <Button Name="WPFSupLocalUsers" Content="Local Users" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Local Users"/>
+                                    <Button Name="WPFSupCredentials" Content="Credential Manager" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Credential Manager"/>
+                                    <Button Name="WPFSupGroupPolicy" Content="Group Policy Editor" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Group Policy Editor"/>
+                                    <Button Name="WPFSupSecurityPolicy" Content="Local Security Policy" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Local Security Policy"/>
+                                    <Button Name="WPFSupWinSecurity" Content="Windows Security" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Windows Security"/>
+                                    <Button Name="WPFSupStartupApps" Content="Startup Apps" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Startup Apps"/>
+                                    <Button Name="WPFSupWinFeatures" Content="Windows Features" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Windows Features"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border Name="WPFSupCardDiagnostics" Tag="Diagnostics and Maintenance"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="Diagnostics and Maintenance" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="8 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupDiskManagement" Content="Disk Management" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Disk Management"/>
+                                    <Button Name="WPFSupDiskCleanup" Content="Disk Cleanup" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Disk Cleanup"/>
+                                    <Button Name="WPFSupStorage" Content="Storage Settings" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Storage Settings"/>
+                                    <Button Name="WPFSupResourceMonitor" Content="Resource Monitor" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Resource Monitor"/>
+                                    <Button Name="WPFSupPerfmon" Content="Performance Monitor" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Performance Monitor"/>
+                                    <Button Name="WPFSupWindowsUpdate" Content="Windows Update" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Windows Update"/>
+                                    <Button Name="WPFSupTroubleshoot" Content="Troubleshoot Settings" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Troubleshoot Settings"/>
+                                    <Button Name="WPFSupMsconfig" Content="System Configuration" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="System Configuration"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                <Border Name="WPFSupCardResources" Tag="ITBros Support Resources"
+                                        Background="#1C2A3B" BorderBrush="#394F63" BorderThickness="1" CornerRadius="13"
+                                        Margin="6,5,6,11" Padding="15,14">
+                                    <StackPanel>
+                                        <DockPanel Margin="5,0,5,12">
+                                            <TextBlock DockPanel.Dock="Left" Text="ITBros Support Resources" Foreground="#F3F6FB"
+                                                       FontSize="17" FontWeight="SemiBold"/>
+                                            <TextBlock Text="6 TOOLS" Foreground="#F78591" FontWeight="SemiBold"
+                                                       FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                        <UniformGrid Columns="2">
+                                    <Button Name="WPFSupWebsite" Content="ITBros Website" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="ITBros Website"/>
+                                    <Button Name="WPFSupContact" Content="Contact ITBros" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Contact ITBros"/>
+                                    <Button Name="WPFSupPortal" Content="Client Portal" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Client Portal"/>
+                                    <Button Name="WPFSupRemoteSupport" Content="Remote Support" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Remote Support"/>
+                                    <Button Name="WPFSupEmailSupport" Content="Email Support" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Email Support"/>
+                                    <Button Name="WPFSupPasswordSender" Content="Password Sender" Height="42" Margin="5" Style="{StaticResource ModernSupportButton}" ToolTip="Password Sender"/>
+                                        </UniformGrid>
+                                    </StackPanel>
+                                </Border>
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="ITBros LLC  |  Managed IT  |  Cybersecurity  |  Cloud  |  Networking  |  Web" Foreground="#9AAFC4" FontSize="11" Margin="14,12,0,8"/>
+                        </StackPanel>
                     </TabItem>
                 </TabControl>
                 </ScrollViewer>
@@ -5215,55 +5503,56 @@ $sync.configs.preset = '{
   ]
 }' | convertfrom-json
 $sync.configs.themes = '{
-    "Classic":  {
-                   "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#f8f8ff",
-                   "MainForegroundColor":  "#F71616",
-                   "MainBackgroundColor":  "#000000",
-                   "LabelBackgroundColor":  "#000000",
-                   "ComboBoxForegroundColor":  "#f8f8ff",
-                   "ButtonInstallBackgroundColor":  "#03071E",
-                   "ButtonTweaksBackgroundColor":  "#370617",
-                   "ButtonConfigBackgroundColor":  "#6A040F",
-                   "ButtonUpdatesBackgroundColor":  "#9D0208",
-                   "ButtonInstallForegroundColor":  "#FFFFFF",
-                   "ButtonTweaksForegroundColor":  "#FFFFFF",
-                   "ButtonConfigForegroundColor":  "#FFFFFF",
-                   "ButtonUpdatesForegroundColor":  "#FFFFFF",
-                   "ButtonBackgroundColor":  "#000000",
-                   "ButtonBackgroundPressedColor":  "#FFFFFF",
-                   "ButtonBackgroundMouseoverColor":  "#DC102B",
-                   "ButtonBackgroundSelectedColor":  "#FF1D1D",
-                   "ButtonForegroundColor":  "#FFFFFF",
-                   "ButtonBorderThickness":  "3",
-                   "ButtonMargin":  "2",
-                   "ButtonCornerRadius": "4"
-                },
-    "Matrix":  {
-                   "ComboBoxBackgroundColor":  "#000000",
-                   "LabelboxForegroundColor":  "#f8f8ff",
-                   "MainForegroundColor":  "#F71616",
-                   "MainBackgroundColor":  "#000000",
-                   "LabelBackgroundColor":  "#000000",
-                   "ComboBoxForegroundColor":  "#f8f8ff",
-                   "ButtonInstallBackgroundColor":  "#03071E",
-                   "ButtonTweaksBackgroundColor":  "#370617",
-                   "ButtonConfigBackgroundColor":  "#6A040F",
-                   "ButtonUpdatesBackgroundColor":  "#9D0208",
-                   "ButtonInstallForegroundColor":  "#FFFFFF",
-                   "ButtonTweaksForegroundColor":  "#FFFFFF",
-                   "ButtonConfigForegroundColor":  "#FFFFFF",
-                   "ButtonUpdatesForegroundColor":  "#FFFFFF",
-                   "ButtonBackgroundColor":  "#000000",
-                   "ButtonBackgroundPressedColor":  "#FFFFFF",
-                   "ButtonBackgroundMouseoverColor":  "#DC102B",
-                   "ButtonBackgroundSelectedColor":  "#FF1D1D",
-                   "ButtonForegroundColor":  "#FFFFFF",
-                   "ButtonBorderThickness":  "3",
-                   "ButtonMargin":  "2",
-                   "ButtonCornerRadius": "4"
-               }
-}' | convertfrom-json
+  "Classic": {
+    "ComboBoxBackgroundColor": "#1B2938",
+    "LabelboxForegroundColor": "#E7EEF6",
+    "MainForegroundColor": "#E7EEF6",
+    "MainBackgroundColor": "#101923",
+    "LabelBackgroundColor": "#101923",
+    "ComboBoxForegroundColor": "#E7EEF6",
+    "ButtonInstallBackgroundColor": "#223247",
+    "ButtonTweaksBackgroundColor": "#223247",
+    "ButtonConfigBackgroundColor": "#223247",
+    "ButtonUpdatesBackgroundColor": "#223247",
+    "ButtonInstallForegroundColor": "#F2F6FA",
+    "ButtonTweaksForegroundColor": "#F2F6FA",
+    "ButtonConfigForegroundColor": "#F2F6FA",
+    "ButtonUpdatesForegroundColor": "#F2F6FA",
+    "ButtonBackgroundColor": "#223247",
+    "ButtonBackgroundPressedColor": "#99323F",
+    "ButtonBackgroundMouseoverColor": "#36516C",
+    "ButtonBackgroundSelectedColor": "#AE3543",
+    "ButtonForegroundColor": "#EAF0F7",
+    "ButtonBorderThickness": "1",
+    "ButtonMargin": "3",
+    "ButtonCornerRadius": "8"
+  },
+  "Matrix": {
+    "ComboBoxBackgroundColor": "#1B2938",
+    "LabelboxForegroundColor": "#E7EEF6",
+    "MainForegroundColor": "#E7EEF6",
+    "MainBackgroundColor": "#101923",
+    "LabelBackgroundColor": "#101923",
+    "ComboBoxForegroundColor": "#E7EEF6",
+    "ButtonInstallBackgroundColor": "#223247",
+    "ButtonTweaksBackgroundColor": "#223247",
+    "ButtonConfigBackgroundColor": "#223247",
+    "ButtonUpdatesBackgroundColor": "#223247",
+    "ButtonInstallForegroundColor": "#F2F6FA",
+    "ButtonTweaksForegroundColor": "#F2F6FA",
+    "ButtonConfigForegroundColor": "#F2F6FA",
+    "ButtonUpdatesForegroundColor": "#F2F6FA",
+    "ButtonBackgroundColor": "#223247",
+    "ButtonBackgroundPressedColor": "#99323F",
+    "ButtonBackgroundMouseoverColor": "#36516C",
+    "ButtonBackgroundSelectedColor": "#AE3543",
+    "ButtonForegroundColor": "#EAF0F7",
+    "ButtonBorderThickness": "1",
+    "ButtonMargin": "3",
+    "ButtonCornerRadius": "8"
+  }
+}
+' | convertfrom-json
 $sync.configs.tweaks = '{
   "WPFEssTweaksAH": {
     "registry": [
@@ -7803,11 +8092,14 @@ $commonKeyEvents = {
 
     # Escape removes focus from the searchbox that way all shortcuts will start workinf again
     if ($_.Key -eq "Escape") {
-        if ($sync.CheckboxFilter.IsFocused)
-        {
-            $sync.CheckboxFilter.SelectAll()
+        if ($sync.WPFSupportSearch.IsFocused) {
+            $sync.WPFSupportSearch.Text = ""
+            $_.Handled = $true
+            return
+        }
+        if ($sync.CheckboxFilter.IsFocused) {
             $sync.CheckboxFilter.Text = ""
-            $sync.CheckboxFilter.Focus()
+            $_.Handled = $true
             return
         }
     }
@@ -7857,14 +8149,24 @@ $commonKeyEvents = {
         if ($_.SystemKey -eq "M") {
             Invoke-WPFButton "WPFTab5BT"
         }
-    }
-    # shortcut for the filter box
-    if ($_.Key -eq "F" -and $_.KeyboardDevice.Modifiers -eq "Ctrl") {
-        if ($sync.CheckboxFilter.Text -eq "Ctrl-F to filter") {
-            $sync.CheckboxFilter.SelectAll()
-            $sync.CheckboxFilter.Text = ""
+        if ($_.SystemKey -eq "S") {
+            Invoke-WPFButton "WPFTab6BT"
         }
-        $sync.CheckboxFilter.Focus()
+    }
+    # Ctrl+F searches the IT Support dashboard or switches to Install for application search.
+    if ($_.Key -eq "F" -and $_.KeyboardDevice.Modifiers -eq "Ctrl") {
+        if ($sync.WPFTab6.IsSelected) {
+            $sync.WPFSupportSearch.Focus()
+            $sync.WPFSupportSearch.SelectAll()
+        } else {
+            Invoke-WPFTab "WPFTab1BT"
+            if ($sync.CheckboxFilter.Text -eq "Ctrl-F to filter") {
+                $sync.CheckboxFilter.Text = ""
+            }
+            $sync.CheckboxFilter.Focus()
+            $sync.CheckboxFilter.SelectAll()
+        }
+        $_.Handled = $true
     }
 }
 $sync["Form"].Add_PreViewKeyDown($commonKeyEvents)
@@ -7874,22 +8176,43 @@ $sync["Form"].Add_MouseLeftButtonDown({
     $sync["Form"].DragMove()
 })
 
-# setting window icon to make it look more professional
+# Load the official 2024 ITBros logo into the WPF header and title bar.
+# A distinct file name prevents the previous white monitor logo from being reused.
 $sync["Form"].Add_Loaded({
-   
-    $downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-    $destinationPath = Join-Path $env:TEMP "itblogo.png"
-    
-    # Check if the file already exists
-    if (-not (Test-Path $destinationPath)) {
-        # File does not exist, download it
-        $wc = New-Object System.Net.WebClient
-        $wc.DownloadFile($downloadUrl, $destinationPath)
-        Write-Output "File downloaded to: $destinationPath"
-    } else {
-        Write-Output "File already exists at: $destinationPath"
+    $downloadUrl = "https://raw.githubusercontent.com/AeroSouls/itbrosuntil/feature/itbros-support-toolkit/assets/itbros-logo-white.png"
+    $destinationPath = Join-Path $env:TEMP "itbros-logo-white-asset-2024.png"
+
+    if (-not (Test-Path -LiteralPath $destinationPath)) {
+        try {
+            $wc = New-Object System.Net.WebClient
+            try {
+                $wc.DownloadFile($downloadUrl, $destinationPath)
+            }
+            finally {
+                $wc.Dispose()
+            }
+        }
+        catch {
+            Write-Warning "Could not download the ITBros logo: $($_.Exception.Message)"
+        }
     }
-    $sync["Form"].Icon = $destinationPath
+
+    if (Test-Path -LiteralPath $destinationPath) {
+        try {
+            # Load the local image without a URI cache holding the old logo.
+            $logo = New-Object System.Windows.Media.Imaging.BitmapImage
+            $logo.BeginInit()
+            $logo.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+            $logo.UriSource = [System.Uri]::new($destinationPath)
+            $logo.EndInit()
+            $logo.Freeze()
+            $sync.WPFIcon.Source = $logo
+            $sync["Form"].Icon = $logo
+        }
+        catch {
+            Write-Warning "Could not load the ITBros logo: $($_.Exception.Message)"
+        }
+    }
 
     Try { 
         [Void][Window]
@@ -7930,8 +8253,50 @@ $sync["Form"].Add_Loaded({
     
     # Move the window to that position...
     [Void][Window]::MoveWindow($windowHandle, $x, $y, $width, $height, $True)
-    Invoke-WPFTab "WPFTab1BT"
+    Invoke-WPFTab "WPFTab6BT"
     $sync["Form"].Focus()
+})
+
+# Search the IT Support tool cards without changing which actions they execute.
+$sync["WPFSupportSearch"].Add_GotFocus({
+    if ($sync.WPFSupportSearch.Text -eq "Search tools...") {
+        $sync.WPFSupportSearch.Text = ""
+    }
+})
+$sync["WPFSupportSearch"].Add_LostFocus({
+    if ([string]::IsNullOrWhiteSpace($sync.WPFSupportSearch.Text)) {
+        $sync.WPFSupportSearch.Text = "Search tools..."
+    }
+})
+$sync["WPFSupportSearch"].Add_TextChanged({
+    $query = $sync.WPFSupportSearch.Text.Trim()
+    if ($query -eq "Search tools...") { $query = "" }
+
+    foreach ($cardId in @(
+        "WPFSupCardSystem", "WPFSupCardPrinters", "WPFSupCardNetwork",
+        "WPFSupCardSecurity", "WPFSupCardDiagnostics",
+        "WPFSupCardRepairs", "WPFSupCardResources"
+    )) {
+        $card = $sync[$cardId]
+        if ($null -eq $card) { continue }
+
+        # Card has a StackPanel containing a heading DockPanel and a UniformGrid of buttons.
+        $buttonGrid = $card.Child.Children[1]
+        $categoryMatch = $card.Tag.ToString().IndexOf(
+            $query, [System.StringComparison]::OrdinalIgnoreCase
+        ) -ge 0
+
+        $visible = 0
+        foreach ($button in $buttonGrid.Children) {
+            $nameMatch = $button.Content.ToString().IndexOf(
+                $query, [System.StringComparison]::OrdinalIgnoreCase
+            ) -ge 0
+            $show = ($query.Length -eq 0) -or $categoryMatch -or $nameMatch
+            $button.Visibility = if ($show) { "Visible" } else { "Collapsed" }
+            if ($show) { $visible++ }
+        }
+        $card.Visibility = if ($visible -gt 0) { "Visible" } else { "Collapsed" }
+    }
 })
 
 $sync["CheckboxFilter"].Add_TextChanged({
@@ -7954,19 +8319,6 @@ $sync["CheckboxFilter"].Add_TextChanged({
      }
 })
 
-
-$downloadUrl = "https://itbros.gg/wp-content/uploads/2023/01/it-bros-high-resolution-logo-white-on-transparent-background.png"
-$destinationPath = Join-Path $env:TEMP "itblogo.png"
-
-# Check if the file already exists
-if (-not (Test-Path $destinationPath)) {
-    # File does not exist, download it
-    $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile($downloadUrl, $destinationPath)
-    Write-Output "File downloaded to: $destinationPath"
-} else {
-    Write-Output "File already exists at: $destinationPath"
-}
 
 # show current windowsd Product ID
 #Write-Host "Your Windows Product Key: $((Get-WmiObject -query 'select * from SoftwareLicensingService').OA3xOriginalProductKey)"
