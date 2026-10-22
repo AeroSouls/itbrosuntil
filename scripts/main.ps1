@@ -193,16 +193,6 @@ $commonKeyEvents = {
 
 
     if ($_.KeyboardDevice.Modifiers -eq "Alt") {
-        # this is an example how to handle shortcuts per tab
-        # Alt-I on the MicroWin tab (4) would press GetIso Button
-        # NOTE: All per tab shortcuts have to be handled *before* regular tab keys
-        # if ($_.SystemKey -eq "I") {
-        #     $TabNav = Get-WinUtilVariables | Where-Object {$psitem -like "WPFTabNav"}
-        #     if ($sync.$TabNav.Items[4].IsSelected -eq $true) {
-        #         Invoke-WPFButton "WPFGetIso"
-        #         break
-        #     }
-        # }
         if ($_.SystemKey -eq "I") {
             Invoke-WPFButton "WPFTab1BT"
         }
@@ -214,9 +204,6 @@ $commonKeyEvents = {
         }
         if ($_.SystemKey -eq "U") {
             Invoke-WPFButton "WPFTab4BT"
-        }
-        if ($_.SystemKey -eq "M") {
-            Invoke-WPFButton "WPFTab5BT"
         }
         if ($_.SystemKey -eq "S") {
             Invoke-WPFButton "WPFTab6BT"
