@@ -463,15 +463,11 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="182"/>
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                            <Border Background="#F6F7F9" CornerRadius="10" Width="64" Height="62" Margin="0,0,9,0" Padding="5">
-                                <Image Name="WPFIcon" Width="54" Height="52" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"/>
-                            </Border>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="ITBros" Foreground="#FFFFFF" FontSize="19" FontWeight="Bold"/>
-                                <TextBlock Text="TECH TOOLKIT" Foreground="#ABBDCE" FontSize="9" FontWeight="SemiBold"/>
-                            </StackPanel>
-                        </StackPanel>
+                        <!-- Single official logo: the source image already contains ITBros lettering. -->
+                        <Border Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Left"
+                                Background="#F6F7F9" CornerRadius="10" Width="152" Height="65" Padding="7">
+                            <Image Name="WPFIcon" Width="138" Height="51" Stretch="Uniform" Source="https://itbros.gg/wp-content/uploads/2024/02/itbros-high-resolution-logo-black.png"/>
+                        </Border>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
                             <ToggleButton Name="WPFTab6BT" Content="IT Support" Style="{StaticResource ModernNav}" Width="115" Height="42" Margin="3,0" FontWeight="SemiBold"/>
                             <ToggleButton Name="WPFTab1BT" Content="Install" Style="{StaticResource ModernNav}" Width="76" Height="42" Margin="3,0" FontWeight="SemiBold"/>
