@@ -2,7 +2,7 @@
 .NOTES
     Author         : AeroSouls
     GitHub         : https://github.com/AeroSouls
-    Version        : 2.5
+    Version        : 2.6
 #>
 
 Start-Transcript $ENV:TEMP\Winutil.log -Append
