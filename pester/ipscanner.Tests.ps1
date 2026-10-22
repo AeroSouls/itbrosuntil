@@ -70,3 +70,50 @@ Describe 'ITBros IP Scanner window XAML' {
         }
     }
 }
+
+Describe 'IP Scanner result display' {
+    It 'extracts the IPv4 value instead of PowerShell file-provider metadata' {
+        $raw = [pscustomobject]@{
+            IP = '@{value=192.168.1.107; PSPath=C:\Users\Test\scan.txt}'
+            Hostname = 'DESKTOP-TEST'
+            DeviceType = 'Device'
+            Latency = '5'
+            MAC = 'AA-BB-CC-DD-EE-FF'
+            Ports = '80, 445'
+        }
+        $result = Convert-WPFScannerResult -Row $raw
+        $result.IP | Should -Be '192.168.1.107'
+        $result.Hostname | Should -Be 'DESKTOP-TEST'
+        @($result.WebLinks).Count | Should -Be 1
+        $result.WebLinks[0].Url.AbsoluteUri | Should -Be 'http://192.168.1.107:80/'
+    }
+
+    It 'creates separate HTTP and HTTPS links but no SMB browser link' {
+        $raw = [pscustomobject]@{
+            IP = '192.168.1.9'
+            Hostname = '-'
+            DeviceType = 'Likely printer'
+            Latency = '2'
+            MAC = '-'
+            Ports = '80, 443, 445, 631, 9100'
+        }
+        $result = Convert-WPFScannerResult -Row $raw
+        @($result.WebLinks).Count | Should -Be 3
+        ($result.WebLinks | ForEach-Object { $_.Label }) -join ',' | Should -Be '80,443,631'
+    }
+
+    It 'rejects rows without an IPv4 address' {
+        $invalid = [pscustomobject]@{ IP='C:\Users\Test'; Ports='80'; Hostname='-' }
+        Convert-WPFScannerResult -Row $invalid | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'IP Scanner ping and filtering safety' {
+    It 'restricts results to confirmed ICMP responders and supports printer filter' {
+        $source = Get-Content -LiteralPath "$PSScriptRoot/../functions/public/Invoke-WPFIPScanner.ps1" -Raw
+        $source | Should -Match '\$alive = @\(\$pings \| Where-Object \{ \$_\.Alive \}\)'
+        $source | Should -Not -Match '\$check\.Entry\.Alive\s*=\s*\$true'
+        $source | Should -Match '\-PrintersOnly'
+        $source | Should -Match '\-ResolveNetBIOS'
+    }
+}
