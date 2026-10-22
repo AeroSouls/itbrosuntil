@@ -195,7 +195,7 @@ function Invoke-WPFIPScanner {
                         <TextBlock Text="SHOW:" Foreground="#BECEDF" FontSize="11" FontWeight="Bold"
                                    VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <ComboBox Name="ScanFilter" SelectedIndex="0" Height="33" Width="200"
-                                  Background="#203247" Foreground="#101923" FontSize="12"
+                                  Background="#E6EDF6" Foreground="#17273A" FontSize="12"
                                   ToolTip="Printer filter looks for TCP 9100, 631, 515 or printer names. All devices must respond to ping.">
                             <ComboBoxItem Content="All responding devices"/>
                             <ComboBoxItem Content="Likely printers only"/>
